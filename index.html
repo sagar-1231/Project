@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <meta http-equiv="CONTENT-TYPE" content="text/html; charset=UTF-8">
+  <title>Sagar Portfolio</title>
+		<script src="https://kit.fontawesome.com/e9c6993e3c.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+		<!----navbar-->
+  <div id="header">
+    <div id="dibba">
+      <nav>
+        <img src="Studio.jpg"class="logo">
+        
+        <ul>
+        <li><a href="#">Home</a></li>
+        <li><a href="#">About</a></li>
+        <li><a href="#">Services</a></li>
+        <li><a href="#">Projects</a></li>
+        <li><a href="#">Contact</a></li>
+        </ul>
+      </nav>
+    		<!---- navbar section end----->
+    		<!---- main screen starts--->
+      <div class="txt">
+        <p>web developer</p>
+        <h1>Hello I`am <span>Sagar</span>.<br>I am from India BHARAT</h1>
+      </div>
+    </div>
+  </div>
+		<!---main page ends---->
+  <!-- about section start-->
+  <div id="about">
+    <div class="row">
+      <div class="row1">
+        <img src="37.jpg">
+      </div>
+      <div class="row2">
+        <h1 class="subtitle">About Me</h1>
+        
+          <p>"Hi there! I'm [Your Name], a passionate
+            [Your Profession/Field] with a knack for [Your Unique Skill/Talent]. I thrive on [What Motivates You], always eager to explore new ideas and create meaningful experiences. With a blend of [Your Skills], I'm dedicated to making a positive impact and pushing boundaries in 
+            [Your Industry/Field]."</p>
+        <div class="tabname1">
+          <p class="tabnames active1" onclick="opentab('skills')">Skills</p>
+          <p class="tabnames" onclick="opentab('education')">Education</p>
+          <p class="tabnames" onclick="opentab('experience')">Experience</p>
+        </div>
+        <div class="tabnamescontent active2" id="skills">
+          <ul>
+            <li><span>UI/UX</span><br>Web Developer.</li>
+            <li><span>ui/ux</span><br>web developer</li>
+            <li><span>ui/ux</span><br>web developer</li>
+          </ul>
+        </div>
+      		  <div class="tabnamescontent" id="education">
+          <ul>
+            <li><span>UI/UX</span><br>education</li>
+            <li><span>ui/ux</span><br>education</li>
+            <li><span>ui/ux</span><br>education</li>
+          </ul>
+        </div>
+      		<div class="tabnamescontent" id="experience">
+          <ul>
+            <li><span>UI/UX</span><br>experience</li>
+            <li><span>ui/ux</span><br>experience</li>
+            <li><span>ui/ux</span><br>experience</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+         </div>
+		<!--about section finished-->
+		<!---services section start---->
+		<div id="services">
+				<div class="container">
+						<h1 class="subtitle">My Services</h1>
+						<div class="servlist">
+								<div class="ready">
+										<i class="fa-solid fa-code"></i>
+										<h2>new sevice</h2>
+										<p>Welcome to our showcase of excellence! Explore our curated collection of innovative projects. Each piece reflects our commitment to exceptional design and flawless execution. Dive in and witness the power of our creativity.............</p>
+										<a href="#">Learn more</a>
+								</div>
+								<div class="ready">
+										<i class="fa-brands fa-connectdevelop"></i>
+										<h2>js prctise</h2>
+										<p>Welcome to our showcase of excellence! Explore our curated collection of innovative projects. Each piece reflects our commitment to exceptional design and flawless execution. Dive in and witness the power of our creativity..............</p>
+										<a href="#">Learn more</a>
+								</div>
+								<div class="ready">
+										<i class="fa-brands fa-webflow"></i>
+										<h2>javascript</h2>
+										<p>Welcome to our showcase of excellence! Explore our curated collection of innovative projects. Each piece reflects our commitment to exceptional design and flawless execution. Dive in and witness the power of our creativity..............</p>
+										<a href="#">Learn more</a>
+								</div>
+						</div>
+				</div>
+		</div>
+		<!--- contact form--->
+		<div id="contactform" >
+				<div id="leftside">
+						<h2>web coder</h2>
+				</div>
+				<form name="submit-to-google-sheet">
+      <input name="Email" type="email" placeholder="Email" required>
+      <input name="Name" type="text" placeholder="Name">
+						<input name="message" type="text" placeholder="text here">
+      <button type="submit">Send</button>
+				</form>
+		</div>
+		<!--- contact form end -->
+		<script>
+		
+
+  const scriptURL = 'https://script.google.com/macros/s/AKfycbwwLc1u1jmRkVpA1eP7JfA3RsK4cFCI_eXrusyXI1evxDUv_WREelu79H45W1UIyjpK/exec'
+const form = document.forms['submit-to-google-sheet']
+
+  form.addEventListener('submit', e => {
+    e.preventDefault()
+    fetch(scriptURL, { method: 'POST', body: new FormData(form)})
+      .then(response => console.log('Success!', response))
+      .catch(error => console.error('Error!', error.message))
+  })
+
+		
+		
+		
+		</script>
+		<script src="main.js"></script>
+</body>
+</html>
