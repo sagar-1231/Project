@@ -110,18 +110,26 @@
 						<input name="message" type="text" placeholder="text here">
       <button type="submit"onclick=alert('submitted')>Send</button>
 				</form>
+     <span id="msg"></span>
 		</div>
 		<!--- contact form end -->
 		<script>
 		
 
-  const scriptURL = 'https://script.google.com/macros/s/AKfycbwwLc1u1jmRkVpA1eP7JfA3RsK4cFCI_eXrusyXI1evxDUv_WREelu79H45W1UIyjpK/exec'
+const scriptURL ='https://script.google.com/macros/s/AKfycbwwLc1u1jmRkVpA1eP7JfA3RsK4cFCI_eXrusyXI1evxDUv_WREelu79H45W1UIyjpK/exec'
 const form = document.forms['submit-to-google-sheet']
+const msg = document.getElementById("msg")
 
   form.addEventListener('submit', e => {
     e.preventDefault()
     fetch(scriptURL, { method: 'POST', body: new FormData(form)})
-      .then(response => console.log('Success!', response))
+      .then(response => { 
+                 msg.innerHTML = "submitted"
+                 setTimeout(function(){
+                  msg.innerHTML = ""   
+                    },2000)
+                 form.reset()
+                     })
       .catch(error => console.error('Error!', error.message))
   })
 
