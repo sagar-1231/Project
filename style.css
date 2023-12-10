@@ -167,13 +167,97 @@ nav ul li a:hover::after{
   margin-top: 20px;
 }  
   
-#contactform{
+/*#contactform{
   display: grid;
   /*grid-template-columns: 1fr 1fr;-->*/
   grid-template-columns: repeat(auto-fit,minmax(300px 1fr));-->
   grid-gap:40px;
   margin-top: 50px;
+}*/
+
+
+.contactleft{
+   flex-basis: 35%;
 }
+.contactright{
+  flex-basis: 60%;
+}
+.contactleft p{
+  margin: 30px;
+  
+}
+.contactleft p i{
+  margin-right: 15px;
+  font-size: 25px;
+  color:lightgreen;
+}
+.socialicons{
+  margin-top: 20px;
+  padding:10px;
+}
+.socialicons a{
+  text-decoration: none;
+  font-size: 30px;
+  margin: 10px;
+  display: inline-block;
+  color:lightgreen;
+  transition: transform 0.5s;
+}
+.socialicons a:hover{
+  color: lightsalmon;
+  transform: translateY(-5px);
+}
+.button {
+  display: inline-block;
+  padding: 10px 20px;
+  font-size: 16px;
+  text-align: center;
+  text-decoration: none;
+  background-color: #3498db;
+  color: #ffffff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-left: px;
+}
+
+/* Hover effect */
+.button:hover {
+  background-color: #2980b9;
+}
+.contactright form{
+  width: 100%;
+  padding: 20px;
+}
+form input, form textarea{
+  width: 100%;
+  border:0;
+  outline: none;
+  background: lightgreen;
+  padding: 15px;
+  margin: ;
+  color: white;
+  font-size: 20px;
+  border-radius: 6px;
+}
+#msg{
+  color :green;
+  margin-top: -40px;
+  
+}
+footer{
+  background: lightgreen;
+  color:black;
+  text-align: center;
+  padding: 15px;
+  margin-top: 20px;
+  font-weight: 300;
+  font-size: 20px;
+}
+
+
+
+
   
   
   
