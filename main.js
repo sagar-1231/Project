@@ -1,26 +1,60 @@
-var tabnames = document.getElementsByClassName("tabnames");
-var tabnamescontent = document.getElementsByClassName("tabnamescontent");
+// script.js
+const scriptURL = 'https://script.google.com/macros/s/AKfycbyk0lOsnCjinDUvVRjukGHQa8YsqY8STdOewL9a-lt0oZsFqQMwguXgNxdpURrL38XYGA/exec'; // Replace with your Google Apps Script URL
 
-          function opentab(x){
-              for(tabname of tabnames){
-                  tabname.classList.remove("active1");
-              }
-              for(tabnamesconten of tabnamescontent){
-                  tabnamesconten.classList.remove("active2");
-              }
-              event.currentTarget.classList.add("active1");
-              document.getElementById(x).classList.add("active2");
-          }
-         /*contact form*/
+function submitEntry() {
+    const name = document.getElementById('name').value;
+    const vehicleNo = document.getElementById('vehicleNo').value;
+    const village = document.getElementById('village').value;
+    const entryDate = document.getElementById('entryDate').value;
+    const entryTime = document.getElementById('entryTime').value;
 
-<script>
-  const scriptURL = 'https://script.google.com/macros/s/AKfycbwwLc1u1jmRkVpA1eP7JfA3RsK4cFCI_eXrusyXI1evxDUv_WREelu79H45W1UIyjpK/exec'
-const form = document.forms['submit-to-google-sheet']
+    const formData = new FormData();
+    formData.append('action', 'addEntry');
+    formData.append('name', name);
+    formData.append('vehicleNo', vehicleNo);
+    formData.append('village', village);
+    formData.append('entryDate', entryDate);
+    formData.append('entryTime', entryTime);
 
-  form.addEventListener('submit', e => {
-    e.preventDefault()
-    fetch(scriptURL, { method: 'POST', body: new FormData(form)})
-      .then(response => console.log('Success!', response))
-      .catch(error => console.error('Error!', error.message))
-  })
-</script>
+    fetch(scriptURL, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert(data.message);
+        document.getElementById('entryForm').reset();
+    })
+    .catch(error => {
+        console.error('Error!', error.message);
+        alert('An error occurred.');
+    });
+}
+
+function submitExit() {
+    const vehicleNo = document.getElementById('exitVehicleNo').value;
+    const exitDate = document.getElementById('exitDate').value;
+    const exitTime = document.getElementById('exitTime').value;
+    const price = document.getElementById('price').value;
+
+    const formData = new FormData();
+    formData.append('action', 'addExit');
+    formData.append('vehicleNo', vehicleNo);
+    formData.append('exitDate', exitDate);
+    formData.append('exitTime', exitTime);
+    formData.append('price', price);
+
+    fetch(scriptURL, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert(data.message);
+        document.getElementById('exitForm').reset();
+    })
+    .catch(error => {
+        console.error('Error!', error.message);
+        alert('An error occurred.');
+    });
+}
