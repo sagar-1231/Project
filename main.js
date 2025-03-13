@@ -1,4 +1,4 @@
-// script.js
+/** // script.js
 const scriptURL = 'https://script.google.com/macros/s/AKfycbyk0lOsnCjinDUvVRjukGHQa8YsqY8STdOewL9a-lt0oZsFqQMwguXgNxdpURrL38XYGA/exec'; // Replace with your Google Apps Script URL
 
 function submitEntry() {
@@ -58,3 +58,4 @@ function submitExit() {
         alert('An error occurred.');
     });
 }
+**/
