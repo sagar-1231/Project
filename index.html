@@ -1,55 +1,376 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Parking Management</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Aaru's Kitchen - Online Order & Admin</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f8f9fa; color: #333; padding-bottom: 90px; }
+        
+        /* Header */
+        header { background: #ff5722; color: white; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        header h1 { font-size: 22px; }
+        header .store-address { font-size: 12px; margin-top: 3px; opacity: 0.95; background: rgba(0,0,0,0.1); display: inline-block; padding: 3px 8px; border-radius: 4px; }
+        
+        .nav-tabs { display: flex; justify-content: center; gap: 10px; margin-top: 10px; }
+        .tab-btn { background: rgba(255,255,255,0.2); color: white; border: none; padding: 6px 15px; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: bold; }
+        .tab-btn.active { background: white; color: #ff5722; }
+
+        .container { max-width: 600px; margin: 15px auto; padding: 0 15px; }
+
+        /* Cards & Forms */
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; }
+        .card h2 { margin-bottom: 15px; font-size: 18px; color: #ff5722; }
+        .input-group { margin-bottom: 12px; }
+        .input-group label { display: block; font-size: 12px; margin-bottom: 5px; font-weight: bold; }
+        .input-group input, .input-group textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
+        
+        .btn { width: 100%; background: #ff5722; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 5px; }
+        .btn:hover { background: #e64a19; }
+        .btn-success { background: #25d366; }
+        .btn-danger { background: #dc3545; padding: 6px 10px; font-size: 12px; width: auto; border-radius: 6px; }
+        
+        /* Menu Grid / Cards UI */
+        .menu-grid { display: flex; flex-direction: column; gap: 15px; }
+        .menu-item-card { display: flex; align-items: center; background: #fff; border: 1px solid #eee; border-radius: 10px; overflow: hidden; padding: 10px; gap: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .menu-item-card img { width: 85px; height: 85px; object-fit: cover; border-radius: 8px; background-color: #ffe0b2; }
+        .item-info { flex-grow: 1; }
+        .item-info h4 { font-size: 15px; margin-bottom: 3px; color: #333; }
+        .item-info p { font-size: 14px; color: #ff5722; font-weight: bold; }
+        
+        .qty-controls { display: flex; align-items: center; gap: 8px; }
+        .qty-btn { background: #ff5722; color: white; border: none; width: 28px; height: 28px; border-radius: 50%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+        .qty-btn.minus { background: #ddd; color: #333; }
+
+        /* Admin Specific UI */
+        .admin-item-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; }
+        .user-status { display: flex; justify-content: space-between; align-items: center; background: #fff3e0; padding: 10px 15px; border-radius: 8px; margin-bottom: 15px; font-size: 13px; }
+
+        /* Floating Cart Bar */
+        .cart-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #ddd; padding: 15px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; max-width: 600px; margin: 0 auto; z-index: 101; }
+        .hidden { display: none !important; }
+    </style>
 </head>
 <body>
+
+    <header>
+        <h1>Aaru's Kitchen</h1>
+        <div class="store-address">📍 Ganesh Mandir, Mondongri - 480331</div>
+        <div class="nav-tabs">
+            <button class="tab-btn active" id="tab-cust-btn" onclick="switchTab('customer')">Customer View</button>
+            <button class="tab-btn" id="tab-admin-btn" onclick="switchTab('admin')">Admin Panel</button>
+        </div>
+    </header>
+
     <div class="container">
-        <h1>Parking Management System</h1>
-        <div class="form-container">
-            <h2>Vehicle Entry</h2>
-            <form id="entryForm">
-                <label for="name">Name:</label>
-                <input type="text" id="name" required>
+        
+        <!-- ================= CUSTOMER SECTION ================= -->
+        <div id="customer-view">
+            <!-- Auth Form -->
+            <div id="auth-section" class="card">
+                <h2>Customer Login</h2>
+                <form id="auth-form" onsubmit="handleAuth(event)">
+                    <div class="input-group">
+                        <label>Aapka Naam (Name)</label>
+                        <input type="text" id="cust-name" placeholder="Enter full name" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Mobile Number</label>
+                        <input type="tel" id="cust-phone" pattern="[0-9]{10}" placeholder="10-digit phone number" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Delivery Address / Landmark</label>
+                        <textarea id="cust-address" rows="2" placeholder="House no, Colony, Landmark" required></textarea>
+                    </div>
+                    <button type="submit" class="btn">Login & View Menu</button>
+                </form>
+            </div>
 
-                <label for="vehicleNo">Vehicle No.:</label>
-                <input type="text" id="vehicleNo" required>
+            <!-- Customer Menu -->
+            <div id="menu-section" class="hidden">
+                <div class="user-status">
+                    <div>Logged in: <strong id="logged-user-name"></strong></div>
+                    <span style="color:#d32f2f; cursor:pointer;" onclick="logout()">Logout</span>
+                </div>
 
-                <label for="village">Village:</label>
-                <input type="text" id="village" required>
-
-                <label for="entryDate">Entry Date:</label>
-                <input type="date" id="entryDate" required>
-
-                <label for="entryTime">Entry Time:</label>
-                <input type="time" id="entryTime" required>
-
-                <button type="button" onclick="submitEntry()">Submit Entry</button>
-            </form>
+                <div class="card">
+                    <h2>Our Special Menu</h2>
+                    <div id="customer-menu-list" class="menu-grid"></div>
+                </div>
+            </div>
         </div>
 
-        <div class="form-container">
-            <h2>Vehicle Exit</h2>
-            <form id="exitForm">
-                <label for="exitVehicleNo">Vehicle No.:</label>
-                <input type="text" id="exitVehicleNo" required>
+        <!-- ================= ADMIN PANEL SECTION ================= -->
+        <div id="admin-view" class="hidden">
+            <!-- Admin Login Pin -->
+            <div id="admin-auth" class="card">
+                <h2>Admin Verification</h2>
+                <div class="input-group">
+                    <label>Enter Admin PIN (Default: 1234)</label>
+                    <input type="password" id="admin-pin" placeholder="PIN code enter karein">
+                </div>
+                <button class="btn" onclick="verifyAdmin()">Login as Admin</button>
+            </div>
 
-                <label for="exitDate">Exit Date:</label>
-                <input type="date" id="exitDate" required>
+            <!-- Admin Dashboard -->
+            <div id="admin-dashboard" class="hidden">
+                <!-- Add New Item Form -->
+                <div class="card">
+                    <h2>Add New Menu Item</h2>
+                    <form onsubmit="addNewItem(event)">
+                        <div class="input-group">
+                            <label>Item Name</label>
+                            <input type="text" id="new-item-name" placeholder="e.g. Veg Noodles" required>
+                        </div>
+                        <div class="input-group">
+                            <label>Price (₹)</label>
+                            <input type="number" id="new-item-price" placeholder="e.g. 90" required>
+                        </div>
+                        <div class="input-group">
+                            <label>Image URL (Photo Link)</label>
+                            <input type="url" id="new-item-img" placeholder="Paste direct image link" required>
+                        </div>
+                        <button type="submit" class="btn">Add to Menu</button>
+                    </form>
+                </div>
 
-                <label for="exitTime">Exit Time:</label>
-                <input type="time" id="exitTime" required>
-
-                <label for="price">Price:</label>
-                <input type="number" id="price" required>
-
-                <button type="button" onclick="submitExit()">Submit Exit</button>
-            </form>
+                <!-- Manage Existing Items -->
+                <div class="card">
+                    <h2>Manage Current Menu</h2>
+                    <div id="admin-menu-list"></div>
+                </div>
+            </div>
         </div>
+
     </div>
-    <script src="script.js"></script>
+
+    <!-- Floating Checkout Bar -->
+    <div id="cart-bar" class="cart-bar hidden">
+        <div>
+            <div style="font-size: 12px; color: #666;">Total Amount:</div>
+            <div style="font-size: 18px; font-weight: bold; color: #ff5722;">₹<span id="total-price">0</span></div>
+        </div>
+        <button class="btn btn-success" style="width: auto; padding: 10px 20px;" onclick="sendWhatsAppOrder()">
+            Order via WhatsApp
+        </button>
+    </div>
+
+    <script>
+        const KITCHEN_WHATSAPP_NUMBER = "919876543210"; // Apna 10-digit WhatsApp number yahan dalein
+        const ADMIN_PIN_CODE = "1234";
+
+        // Aapki di gayi images ke anusaar items aur unke links
+        const defaultMenu = [
+            { id: 1, name: "Egg Chicken Roll", price: 100, img: "https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=300" },
+            { id: 2, name: "Veg Manchurian Dry", price: 120, img: "https://images.unsplash.com/photo-1525351484163-7529414344d8?w=300" },
+            { id: 3, name: "Manchurian Gravy", price: 140, img: "https://images.unsplash.com/photo-1541696432-82c6da8ce7bf?w=300" },
+            { id: 4, name: "Crispy Fried Momos", price: 110, img: "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=300" },
+            { id: 5, name: "Veg Spring Roll", price: 90, img: "https://images.unsplash.com/photo-1606787366850-de63301c7bfc?w=300" },
+            { id: 6, name: "Veg Kathi Roll", price: 80, img: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=300" },
+            { id: 7, name: "Chilli Potato", price: 90, img: "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=300" },
+            { id: 8, name: "Veg Fried Rice", price: 100, img: "https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=300" },
+            { id: 9, name: "Hakka Noodles", price: 90, img: "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=300" }
+        ];
+
+        let menuList = [];
+        let cart = {};
+        let customer = null;
+
+        window.onload = function() {
+            // Version upgrade check taaki naye images properly load ho jayein
+            const savedMenu = localStorage.getItem('aaru_menu_v3');
+            menuList = savedMenu ? JSON.parse(savedMenu) : defaultMenu;
+            saveMenuData();
+
+            const savedCustomer = localStorage.getItem('aaru_customer');
+            if (savedCustomer) {
+                customer = JSON.parse(savedCustomer);
+                showCustomerMenu();
+            }
+        };
+
+        function saveMenuData() {
+            localStorage.setItem('aaru_menu_v3', JSON.stringify(menuList));
+        }
+
+        function switchTab(tab) {
+            document.getElementById('tab-cust-btn').classList.toggle('active', tab === 'customer');
+            document.getElementById('tab-admin-btn').classList.toggle('active', tab === 'admin');
+
+            if (tab === 'customer') {
+                document.getElementById('customer-view').classList.remove('hidden');
+                document.getElementById('admin-view').classList.add('hidden');
+            } else {
+                document.getElementById('customer-view').classList.add('hidden');
+                document.getElementById('admin-view').classList.remove('hidden');
+                document.getElementById('cart-bar').classList.add('hidden');
+            }
+        }
+
+        function handleAuth(e) {
+            e.preventDefault();
+            customer = {
+                name: document.getElementById('cust-name').value.trim(),
+                phone: document.getElementById('cust-phone').value.trim(),
+                address: document.getElementById('cust-address').value.trim()
+            };
+            localStorage.setItem('aaru_customer', JSON.stringify(customer));
+            showCustomerMenu();
+        }
+
+        function showCustomerMenu() {
+            document.getElementById('auth-section').classList.add('hidden');
+            document.getElementById('menu-section').classList.remove('hidden');
+            document.getElementById('logged-user-name').innerText = customer.name;
+            renderCustomerMenu();
+        }
+
+        function logout() {
+            localStorage.removeItem('aaru_customer');
+            location.reload();
+        }
+
+        function renderCustomerMenu() {
+            const container = document.getElementById('customer-menu-list');
+            container.innerHTML = '';
+
+            menuList.forEach(item => {
+                const qty = cart[item.id] || 0;
+                container.innerHTML += `
+                    <div class="menu-item-card">
+                        <img src="${item.img}" alt="${item.name}" onerror="this.onerror=null;this.src='https://dummyimage.com/200x200/ff5722/ffffff.png&text=Food+Item';">
+                        <div class="item-info">
+                            <h4>${item.name}</h4>
+                            <p>₹${item.price}</p>
+                        </div>
+                        <div class="qty-controls">
+                            <button class="qty-btn minus" onclick="updateQty(${item.id}, -1)">-</button>
+                            <span style="font-weight:bold; min-width:15px; text-align:center;">${qty}</span>
+                            <button class="qty-btn" onclick="updateQty(${item.id}, 1)">+</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function updateQty(itemId, change) {
+            const currentQty = cart[itemId] || 0;
+            const newQty = currentQty + change;
+
+            if (newQty <= 0) {
+                delete cart[itemId];
+            } else {
+                cart[itemId] = newQty;
+            }
+
+            renderCustomerMenu();
+            calculateTotal();
+        }
+
+        function calculateTotal() {
+            let total = 0;
+            let itemCount = 0;
+
+            for (let id in cart) {
+                const item = menuList.find(m => m.id == id);
+                if (item) {
+                    total += item.price * cart[id];
+                    itemCount += cart[id];
+                }
+            }
+
+            document.getElementById('total-price').innerText = total;
+            document.getElementById('cart-bar').classList.toggle('hidden', itemCount === 0);
+        }
+
+        function sendWhatsAppOrder() {
+            let orderText = `*New Order - Aaru's Kitchen*\n`;
+            orderText += `*(Ganesh Mandir, Mondongri - 480331)*\n\n`;
+            orderText += `*Customer Details:*\n`;
+            orderText += ` Name: ${customer.name}\n`;
+            orderText += ` Phone: ${customer.phone}\n`;
+            orderText += ` Delivery Address: ${customer.address}\n\n`;
+            orderText += `*Order Items:*\n`;
+
+            let total = 0;
+            for (let id in cart) {
+                const item = menuList.find(m => m.id == id);
+                if (item) {
+                    const itemTotal = item.price * cart[id];
+                    total += itemTotal;
+                    orderText += `- ${item.name} x ${cart[id]} = ₹${itemTotal}\n`;
+                }
+            }
+            orderText += `\n*Total Amount: ₹${total}*`;
+
+            const whatsappUrl = `https://api.whatsapp.com/send?phone=${KITCHEN_WHATSAPP_NUMBER}&text=${encodeURIComponent(orderText)}`;
+            window.location.href = whatsappUrl;
+        }
+
+        function verifyAdmin() {
+            const pin = document.getElementById('admin-pin').value;
+            if (pin === ADMIN_PIN_CODE) {
+                document.getElementById('admin-auth').classList.add('hidden');
+                document.getElementById('admin-dashboard').classList.remove('hidden');
+                renderAdminMenu();
+            } else {
+                alert('Wrong PIN code!');
+            }
+        }
+
+        function renderAdminMenu() {
+            const container = document.getElementById('admin-menu-list');
+            container.innerHTML = '';
+
+            menuList.forEach(item => {
+                container.innerHTML += `
+                    <div class="admin-item-row">
+                        <div>
+                            <strong>${item.name}</strong> - ₹${item.price}
+                        </div>
+                        <div>
+                            <button class="btn btn-danger" onclick="deleteItem(${item.id})">Delete</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function addNewItem(e) {
+            e.preventDefault();
+            const nameInput = document.getElementById('new-item-name');
+            const priceInput = document.getElementById('new-item-price');
+            const imgInput = document.getElementById('new-item-img');
+
+            const newItem = {
+                id: Date.now(),
+                name: nameInput.value.trim(),
+                price: parseFloat(priceInput.value),
+                img: imgInput.value.trim() || 'https://dummyimage.com/200x200/ff5722/ffffff.png&text=Food+Item'
+            };
+
+            menuList.push(newItem);
+            saveMenuData();
+            renderAdminMenu();
+            renderCustomerMenu();
+
+            nameInput.value = '';
+            priceInput.value = '';
+            imgInput.value = '';
+            alert('Item added successfully!');
+        }
+
+        function deleteItem(id) {
+            if (confirm('Kya aap is item ko menu se hatana chahte hain?')) {
+                menuList = menuList.filter(item => item.id !== id);
+                delete cart[id];
+                saveMenuData();
+                renderAdminMenu();
+                renderCustomerMenu();
+                calculateTotal();
+            }
+        }
+    </script>
 </body>
 </html>
