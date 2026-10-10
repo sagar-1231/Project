@@ -5,115 +5,162 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aaru's Kitchen - Online Order</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: #f8f9fa; color: #333; padding-bottom: 100px; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        body { background-color: #f4f6f8; color: #222; padding-bottom: 100px; }
         
-        /* Dark Professional Header (Inspired by reference) */
-        header { background: #111; color: white; border-bottom: 3px solid #ff5722; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        .top-bar { display: flex; justify-content: space-between; align-items: center; padding: 8px 20px; font-size: 12px; border-bottom: 1px solid #222; color: #ccc; flex-wrap: wrap; gap: 10px; }
-        .main-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; }
-        .brand-title { font-size: 20px; font-weight: bold; color: #ff5722; display: flex; align-items: center; gap: 8px; }
-        .brand-sub { font-size: 11px; color: #aaa; }
+        /* Header */
+        header { background: linear-gradient(135deg, #ff5722, #e64a19); color: white; padding: 15px; text-align: center; sticky; top: 0; position: sticky; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        header h1 { font-size: 22px; font-weight: 800; letter-spacing: 0.5px; }
+        header .store-address { font-size: 12px; margin-top: 4px; background: rgba(0,0,0,0.15); display: inline-block; padding: 4px 10px; border-radius: 20px; }
+        
+        .nav-tabs { display: flex; justify-content: center; gap: 10px; margin-top: 12px; }
+        .tab-btn { background: rgba(255,255,255,0.2); color: white; border: none; padding: 6px 18px; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: 700; transition: all 0.2s; }
+        .tab-btn.active { background: white; color: #ff5722; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
 
-        .nav-menu { display: flex; gap: 15px; font-size: 13px; font-weight: 600; }
-        .nav-menu button { background: none; border: none; color: white; cursor: pointer; font-size: 13px; font-weight: 600; padding: 5px 10px; border-radius: 4px; transition: 0.2s; }
-        .nav-menu button.active, .nav-menu button:hover { background: #ff5722; color: white; }
+        .container { max-width: 800px; margin: 15px auto; padding: 0 12px; }
 
-        /* Hero Banner Section */
-        .hero-banner { background: #000; color: white; padding: 30px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; border-bottom: 4px solid #ff5722; }
-        .hero-text h2 { font-size: 14px; text-transform: uppercase; color: #aaa; letter-spacing: 1px; margin-bottom: 5px; }
-        .hero-text h1 { font-size: 28px; font-weight: 900; color: #fff; margin-bottom: 15px; }
-        .hero-img img { max-width: 280px; width: 100%; border-radius: 10px; object-fit: cover; box-shadow: 0 4px 15px rgba(255,87,34,0.3); }
-
-        .container { max-width: 900px; margin: 20px auto; padding: 0 15px; }
-
-        /* Cards & Forms */
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); margin-bottom: 20px; }
+        /* Card Section */
+        .card { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
         .card h2 { margin-bottom: 15px; font-size: 18px; color: #ff5722; font-weight: 700; }
         
         .input-group { margin-bottom: 12px; }
         .input-group label { display: block; font-size: 12px; margin-bottom: 5px; font-weight: 700; color: #555; }
-        .input-group input, .input-group textarea { width: 100%; padding: 12px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 14px; outline: none; }
+        .input-group input, .input-group textarea { width: 100%; padding: 12px; border: 1.5px solid #e0e0e0; border-radius: 10px; font-size: 14px; outline: none; transition: 0.2s; }
         .input-group input:focus, .input-group textarea:focus { border-color: #ff5722; }
 
-        .btn { width: 100%; background: #ff5722; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; }
+        .btn { width: 100%; background: #ff5722; color: white; border: none; padding: 12px; border-radius: 10px; font-size: 15px; font-weight: bold; cursor: pointer; }
         .btn:hover { background: #e64a19; }
         .btn-success { background: #25d366; }
         .btn-danger { background: #dc3545; padding: 6px 12px; font-size: 12px; width: auto; border-radius: 6px; }
 
-        /* Menu Grid (Swiggy / Zomato Modern Style) */
-        .section-title { font-size: 20px; font-weight: 800; color: #222; margin: 20px 0 15px 0; border-left: 4px solid #ff5722; padding-left: 10px; }
-        .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+        /* Modern Food Grid (Responsive Mobile & Desktop) */
+        .menu-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); 
+            gap: 16px; 
+        }
 
-        .food-card { background: #ffffff; border-radius: 14px; overflow: hidden; box-shadow: 0 3px 10px rgba(0,0,0,0.06); border: 1px solid #eee; display: flex; flex-direction: column; justify-content: space-between; transition: 0.2s; }
-        .food-card:hover { transform: translateY(-3px); box-shadow: 0 6px 15px rgba(0,0,0,0.1); }
+        .food-card { 
+            background: #ffffff; 
+            border-radius: 16px; 
+            overflow: hidden; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06); 
+            border: 1px solid #f0f0f0; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: space-between;
+            transition: transform 0.2s;
+        }
+        .food-card:hover { transform: translateY(-3px); }
 
-        .food-img { width: 100%; height: 160px; object-fit: cover; background: #eee; }
+        .food-img-container { 
+            width: 100%; 
+            height: 150px; 
+            overflow: hidden; 
+            position: relative; 
+            background: #f8f8f8;
+        }
+        .food-img-container img { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
+        }
+
         .food-details { padding: 12px; }
-        .food-title { font-size: 16px; font-weight: 700; color: #222; margin-bottom: 4px; }
+        .food-title { font-size: 15px; font-weight: 700; color: #222; margin-bottom: 4px; }
         .food-price { font-size: 16px; font-weight: 800; color: #ff5722; margin-bottom: 10px; }
 
-        .food-action { padding: 0 12px 12px 12px; display: flex; justify-content: flex-end; }
-        
-        .add-btn { background: #fff; color: #ff5722; border: 1.5px solid #ff5722; padding: 6px 20px; border-radius: 8px; font-weight: 800; font-size: 13px; cursor: pointer; }
+        .food-action { 
+            padding: 0 12px 12px 12px; 
+            display: flex; 
+            justify-content: flex-end; 
+        }
+
+        /* Swiggy/Zomato Style Add Button & Counter */
+        .add-btn { 
+            background: #fff; 
+            color: #ff5722; 
+            border: 1.5px solid #ff5722; 
+            padding: 6px 20px; 
+            border-radius: 8px; 
+            font-weight: 800; 
+            font-size: 13px; 
+            cursor: pointer; 
+            box-shadow: 0 2px 4px rgba(255,87,34,0.1); 
+            transition: all 0.2s;
+        }
         .add-btn:hover { background: #ff5722; color: #fff; }
 
-        .qty-controls { display: flex; align-items: center; background: #ff5722; border-radius: 8px; overflow: hidden; color: white; font-weight: bold; }
-        .qty-btn { background: transparent; color: white; border: none; width: 32px; height: 30px; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .qty-count { padding: 0 10px; font-size: 14px; }
+        .qty-controls { 
+            display: flex; 
+            align-items: center; 
+            background: #ff5722; 
+            border-radius: 8px; 
+            overflow: hidden; 
+            color: white; 
+            font-weight: bold; 
+        }
+        .qty-btn { 
+            background: transparent; 
+            color: white; 
+            border: none; 
+            width: 32px; 
+            height: 30px; 
+            font-size: 16px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+        }
+        .qty-btn:active { background: rgba(0,0,0,0.1); }
+        .qty-count { padding: 0 8px; font-size: 14px; }
 
         /* Admin UI */
         .admin-item-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; }
-        .user-status { display: flex; justify-content: space-between; align-items: center; background: #fff3e0; padding: 10px 15px; border-radius: 8px; margin-bottom: 15px; font-size: 13px; }
+        .user-status { display: flex; justify-content: space-between; align-items: center; background: #fff3e0; padding: 10px 15px; border-radius: 10px; margin-bottom: 15px; font-size: 13px; }
 
         /* Cart Floating Bar */
-        .cart-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #ddd; padding: 12px 20px; box-shadow: 0 -4px 15px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; max-width: 900px; margin: 0 auto; z-index: 101; border-radius: 16px 16px 0 0; }
+        .cart-bar { 
+            position: fixed; 
+            bottom: 0; left: 0; right: 0; 
+            background: white; 
+            border-top: 1px solid #eee; 
+            padding: 12px 20px; 
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.1); 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            max-width: 800px; 
+            margin: 0 auto; 
+            z-index: 101; 
+            border-radius: 16px 16px 0 0;
+        }
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <!-- Professional Dark Header -->
     <header>
-        <div class="top-bar">
-            <div>📍 Ganesh Mandir, Mondongri - 480331</div>
-            <div>📞 Order Helpline: +91 9876543210</div>
-        </div>
-        <div class="main-header">
-            <div>
-                <div class="brand-title">🍔 Aaru's Kitchen</div>
-                <div class="brand-sub">Scrumptious Delicacies Only for You</div>
-            </div>
-            <div class="nav-menu">
-                <button id="tab-cust-btn" class="active" onclick="switchTab('customer')">Order Online</button>
-                <button id="tab-admin-btn" onclick="switchTab('admin')">Admin Panel</button>
-            </div>
+        <h1>Aaru's Kitchen</h1>
+        <div class="store-address">📍 Ganesh Mandir, Mondongri - 480331</div>
+        <div class="nav-tabs">
+            <button class="tab-btn active" id="tab-cust-btn" onclick="switchTab('customer')">Book Order</button>
+            <button class="tab-btn" id="tab-admin-btn" onclick="switchTab('admin')">Admin Panel</button>
         </div>
     </header>
-
-    <!-- Hero Banner -->
-    <div class="hero-banner">
-        <div class="hero-text">
-            <h2>Fresh & Delicious</h2>
-            <h1>Indo-Chinese Fast Food</h1>
-            <p style="font-size: 13px; color: #ccc;">Pure taste with best quality ingredients.</p>
-        </div>
-        <div class="hero-img">
-            <img src="https://images.unsplash.com/photo-1541696432-82c6da8ce7bf?auto=format&fit=crop&w=500&q=80" alt="Delicious Food">
-        </div>
-    </div>
 
     <div class="container">
         
         <!-- ================= CUSTOMER SECTION ================= -->
         <div id="customer-view">
-            <!-- Delivery Details Form -->
+            <!-- Order Details Form -->
             <div id="auth-section" class="card">
                 <h2>📝 Book Order - Delivery Details</h2>
                 <form id="auth-form" onsubmit="handleAuth(event)">
                     <div class="input-group">
                         <label>Aapka Naam (Customer Name)</label>
-                        <input type="text" id="cust-name" placeholder="Full name enter karein" required>
+                        <input type="text" id="cust-name" placeholder="Enter full name" required>
                     </div>
                     <div class="input-group">
                         <label>Mobile Number</label>
@@ -127,14 +174,14 @@
                 </form>
             </div>
 
-            <!-- Menu Section -->
+            <!-- Food Menu -->
             <div id="menu-section" class="hidden">
                 <div class="user-status">
                     <div>Ordering for: <strong id="logged-user-name"></strong> (<span id="logged-user-phone"></span>)</div>
                     <span style="color:#d32f2f; cursor:pointer; font-weight:bold;" onclick="changeDetails()">Edit Info</span>
                 </div>
 
-                <div class="section-title">We Serve - Our Special Menu</div>
+                <div style="margin-bottom: 12px; font-weight: 800; font-size: 18px; color: #333;">Recommended Menu</div>
                 <div id="customer-menu-list" class="menu-grid"></div>
             </div>
         </div>
@@ -152,11 +199,11 @@
 
             <div id="admin-dashboard" class="hidden">
                 <div class="card">
-                    <h2>Add New Menu Item</h2>
+                    <h2>Add New Item</h2>
                     <form onsubmit="addNewItem(event)">
                         <div class="input-group">
                             <label>Item Name</label>
-                            <input type="text" id="new-item-name" placeholder="e.g. Spring Roll" required>
+                            <input type="text" id="new-item-name" placeholder="e.g. Cheese Burger" required>
                         </div>
                         <div class="input-group">
                             <label>Price (₹)</label>
@@ -179,7 +226,7 @@
 
     </div>
 
-    <!-- Floating Cart Bar -->
+    <!-- Floating Checkout Bar -->
     <div id="cart-bar" class="cart-bar hidden">
         <div>
             <div style="font-size: 11px; color: #666; font-weight: 700;">TOTAL AMOUNT</div>
@@ -191,7 +238,7 @@
     </div>
 
     <script>
-        const KITCHEN_WHATSAPP_NUMBER = "919315559363"; // Apna 10-digit WhatsApp number yahan dalein
+        const KITCHEN_WHATSAPP_NUMBER = "919876543210"; // Apna 10-digit WhatsApp number yahan dalein
         const ADMIN_PIN_CODE = "1234";
 
         const defaultMenu = [
@@ -211,7 +258,7 @@
         let customer = null;
 
         window.onload = function() {
-            const savedMenu = localStorage.getItem('aaru_menu_v7');
+            const savedMenu = localStorage.getItem('aaru_menu_v6');
             menuList = savedMenu ? JSON.parse(savedMenu) : defaultMenu;
             saveMenuData();
 
@@ -226,7 +273,7 @@
         };
 
         function saveMenuData() {
-            localStorage.setItem('aaru_menu_v7', JSON.stringify(menuList));
+            localStorage.setItem('aaru_menu_v6', JSON.stringify(menuList));
         }
 
         function switchTab(tab) {
@@ -290,7 +337,9 @@
 
                 container.innerHTML += `
                     <div class="food-card">
-                        <img src="${item.img}" alt="${item.name}" class="food-img" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=500&q=80';">
+                        <div class="food-img-container">
+                            <img src="${item.img}" alt="${item.name}" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=500&q=80';">
+                        </div>
                         <div class="food-details">
                             <div class="food-title">${item.name}</div>
                             <div class="food-price">₹${item.price}</div>
