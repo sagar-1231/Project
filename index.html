@@ -3,139 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aaru's Kitchen - Online Order</title>
+    <title>Aaru's Kitchen - Online Order & Admin</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
-        body { background-color: #f4f6f8; color: #222; padding-bottom: 100px; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f8f9fa; color: #333; padding-bottom: 90px; }
         
         /* Header */
-        header { background: linear-gradient(135deg, #ff5722, #e64a19); color: white; padding: 15px; text-align: center; sticky; top: 0; position: sticky; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-        header h1 { font-size: 22px; font-weight: 800; letter-spacing: 0.5px; }
-        header .store-address { font-size: 12px; margin-top: 4px; background: rgba(0,0,0,0.15); display: inline-block; padding: 4px 10px; border-radius: 20px; }
+        header { background: #ff5722; color: white; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        header h1 { font-size: 22px; }
+        header .store-address { font-size: 12px; margin-top: 3px; opacity: 0.95; background: rgba(0,0,0,0.1); display: inline-block; padding: 3px 8px; border-radius: 4px; }
         
-        .nav-tabs { display: flex; justify-content: center; gap: 10px; margin-top: 12px; }
-        .tab-btn { background: rgba(255,255,255,0.2); color: white; border: none; padding: 6px 18px; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: 700; transition: all 0.2s; }
-        .tab-btn.active { background: white; color: #ff5722; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+        .nav-tabs { display: flex; justify-content: center; gap: 10px; margin-top: 10px; }
+        .tab-btn { background: rgba(255,255,255,0.2); color: white; border: none; padding: 6px 15px; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: bold; }
+        .tab-btn.active { background: white; color: #ff5722; }
 
-        .container { max-width: 800px; margin: 15px auto; padding: 0 12px; }
+        .container { max-width: 600px; margin: 15px auto; padding: 0 15px; }
 
-        /* Card Section */
-        .card { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        .card h2 { margin-bottom: 15px; font-size: 18px; color: #ff5722; font-weight: 700; }
-        
+        /* Cards & Forms */
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; }
+        .card h2 { margin-bottom: 15px; font-size: 18px; color: #ff5722; }
         .input-group { margin-bottom: 12px; }
-        .input-group label { display: block; font-size: 12px; margin-bottom: 5px; font-weight: 700; color: #555; }
-        .input-group input, .input-group textarea { width: 100%; padding: 12px; border: 1.5px solid #e0e0e0; border-radius: 10px; font-size: 14px; outline: none; transition: 0.2s; }
-        .input-group input:focus, .input-group textarea:focus { border-color: #ff5722; }
-
-        .btn { width: 100%; background: #ff5722; color: white; border: none; padding: 12px; border-radius: 10px; font-size: 15px; font-weight: bold; cursor: pointer; }
+        .input-group label { display: block; font-size: 12px; margin-bottom: 5px; font-weight: bold; }
+        .input-group input, .input-group textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
+        
+        .btn { width: 100%; background: #ff5722; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 5px; }
         .btn:hover { background: #e64a19; }
         .btn-success { background: #25d366; }
-        .btn-danger { background: #dc3545; padding: 6px 12px; font-size: 12px; width: auto; border-radius: 6px; }
+        .btn-danger { background: #dc3545; padding: 6px 10px; font-size: 12px; width: auto; border-radius: 6px; }
+        
+        /* Menu Grid / Cards UI */
+        .menu-grid { display: flex; flex-direction: column; gap: 15px; }
+        .menu-item-card { display: flex; align-items: center; background: #fff; border: 1px solid #eee; border-radius: 10px; overflow: hidden; padding: 10px; gap: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .menu-item-card img { width: 85px; height: 85px; object-fit: cover; border-radius: 8px; background-color: #ffe0b2; }
+        .item-info { flex-grow: 1; }
+        .item-info h4 { font-size: 15px; margin-bottom: 3px; color: #333; }
+        .item-info p { font-size: 14px; color: #ff5722; font-weight: bold; }
+        
+        .qty-controls { display: flex; align-items: center; gap: 8px; }
+        .qty-btn { background: #ff5722; color: white; border: none; width: 28px; height: 28px; border-radius: 50%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+        .qty-btn.minus { background: #ddd; color: #333; }
 
-        /* Modern Food Grid (Responsive Mobile & Desktop) */
-        .menu-grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); 
-            gap: 16px; 
-        }
-
-        .food-card { 
-            background: #ffffff; 
-            border-radius: 16px; 
-            overflow: hidden; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.06); 
-            border: 1px solid #f0f0f0; 
-            display: flex; 
-            flex-direction: column; 
-            justify-content: space-between;
-            transition: transform 0.2s;
-        }
-        .food-card:hover { transform: translateY(-3px); }
-
-        .food-img-container { 
-            width: 100%; 
-            height: 150px; 
-            overflow: hidden; 
-            position: relative; 
-            background: #f8f8f8;
-        }
-        .food-img-container img { 
-            width: 100%; 
-            height: 100%; 
-            object-fit: cover; 
-        }
-
-        .food-details { padding: 12px; }
-        .food-title { font-size: 15px; font-weight: 700; color: #222; margin-bottom: 4px; }
-        .food-price { font-size: 16px; font-weight: 800; color: #ff5722; margin-bottom: 10px; }
-
-        .food-action { 
-            padding: 0 12px 12px 12px; 
-            display: flex; 
-            justify-content: flex-end; 
-        }
-
-        /* Swiggy/Zomato Style Add Button & Counter */
-        .add-btn { 
-            background: #fff; 
-            color: #ff5722; 
-            border: 1.5px solid #ff5722; 
-            padding: 6px 20px; 
-            border-radius: 8px; 
-            font-weight: 800; 
-            font-size: 13px; 
-            cursor: pointer; 
-            box-shadow: 0 2px 4px rgba(255,87,34,0.1); 
-            transition: all 0.2s;
-        }
-        .add-btn:hover { background: #ff5722; color: #fff; }
-
-        .qty-controls { 
-            display: flex; 
-            align-items: center; 
-            background: #ff5722; 
-            border-radius: 8px; 
-            overflow: hidden; 
-            color: white; 
-            font-weight: bold; 
-        }
-        .qty-btn { 
-            background: transparent; 
-            color: white; 
-            border: none; 
-            width: 32px; 
-            height: 30px; 
-            font-size: 16px; 
-            font-weight: bold; 
-            cursor: pointer; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-        }
-        .qty-btn:active { background: rgba(0,0,0,0.1); }
-        .qty-count { padding: 0 8px; font-size: 14px; }
-
-        /* Admin UI */
+        /* Admin Specific UI */
         .admin-item-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; }
-        .user-status { display: flex; justify-content: space-between; align-items: center; background: #fff3e0; padding: 10px 15px; border-radius: 10px; margin-bottom: 15px; font-size: 13px; }
+        .user-status { display: flex; justify-content: space-between; align-items: center; background: #fff3e0; padding: 10px 15px; border-radius: 8px; margin-bottom: 15px; font-size: 13px; }
 
-        /* Cart Floating Bar */
-        .cart-bar { 
-            position: fixed; 
-            bottom: 0; left: 0; right: 0; 
-            background: white; 
-            border-top: 1px solid #eee; 
-            padding: 12px 20px; 
-            box-shadow: 0 -4px 15px rgba(0,0,0,0.1); 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            max-width: 800px; 
-            margin: 0 auto; 
-            z-index: 101; 
-            border-radius: 16px 16px 0 0;
-        }
+        /* Floating Cart Bar */
+        .cart-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #ddd; padding: 15px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; max-width: 600px; margin: 0 auto; z-index: 101; }
         .hidden { display: none !important; }
     </style>
 </head>
@@ -145,7 +58,7 @@
         <h1>Aaru's Kitchen</h1>
         <div class="store-address">📍 Ganesh Mandir, Mondongri - 480331</div>
         <div class="nav-tabs">
-            <button class="tab-btn active" id="tab-cust-btn" onclick="switchTab('customer')">Book Order</button>
+            <button class="tab-btn active" id="tab-cust-btn" onclick="switchTab('customer')">Customer View</button>
             <button class="tab-btn" id="tab-admin-btn" onclick="switchTab('admin')">Admin Panel</button>
         </div>
     </header>
@@ -154,40 +67,43 @@
         
         <!-- ================= CUSTOMER SECTION ================= -->
         <div id="customer-view">
-            <!-- Order Details Form -->
+            <!-- Auth Form -->
             <div id="auth-section" class="card">
-                <h2>📝 Book Order - Delivery Details</h2>
+                <h2>Customer Login</h2>
                 <form id="auth-form" onsubmit="handleAuth(event)">
                     <div class="input-group">
-                        <label>Aapka Naam (Customer Name)</label>
+                        <label>Aapka Naam (Name)</label>
                         <input type="text" id="cust-name" placeholder="Enter full name" required>
                     </div>
                     <div class="input-group">
                         <label>Mobile Number</label>
-                        <input type="tel" id="cust-phone" pattern="[0-9]{10}" placeholder="10-digit mobile number" required>
+                        <input type="tel" id="cust-phone" pattern="[0-9]{10}" placeholder="10-digit phone number" required>
                     </div>
                     <div class="input-group">
                         <label>Delivery Address / Landmark</label>
-                        <textarea id="cust-address" rows="2" placeholder="House No., Street, Landmark" required></textarea>
+                        <textarea id="cust-address" rows="2" placeholder="House no, Colony, Landmark" required></textarea>
                     </div>
-                    <button type="submit" class="btn">Proceed to Menu</button>
+                    <button type="submit" class="btn">Login & View Menu</button>
                 </form>
             </div>
 
-            <!-- Food Menu -->
+            <!-- Customer Menu -->
             <div id="menu-section" class="hidden">
                 <div class="user-status">
-                    <div>Ordering for: <strong id="logged-user-name"></strong> (<span id="logged-user-phone"></span>)</div>
-                    <span style="color:#d32f2f; cursor:pointer; font-weight:bold;" onclick="changeDetails()">Edit Info</span>
+                    <div>Logged in: <strong id="logged-user-name"></strong></div>
+                    <span style="color:#d32f2f; cursor:pointer;" onclick="logout()">Logout</span>
                 </div>
 
-                <div style="margin-bottom: 12px; font-weight: 800; font-size: 18px; color: #333;">Recommended Menu</div>
-                <div id="customer-menu-list" class="menu-grid"></div>
+                <div class="card">
+                    <h2>Our Special Menu</h2>
+                    <div id="customer-menu-list" class="menu-grid"></div>
+                </div>
             </div>
         </div>
 
         <!-- ================= ADMIN PANEL SECTION ================= -->
         <div id="admin-view" class="hidden">
+            <!-- Admin Login Pin -->
             <div id="admin-auth" class="card">
                 <h2>Admin Verification</h2>
                 <div class="input-group">
@@ -197,13 +113,15 @@
                 <button class="btn" onclick="verifyAdmin()">Login as Admin</button>
             </div>
 
+            <!-- Admin Dashboard -->
             <div id="admin-dashboard" class="hidden">
+                <!-- Add New Item Form -->
                 <div class="card">
-                    <h2>Add New Item</h2>
+                    <h2>Add New Menu Item</h2>
                     <form onsubmit="addNewItem(event)">
                         <div class="input-group">
                             <label>Item Name</label>
-                            <input type="text" id="new-item-name" placeholder="e.g. Cheese Burger" required>
+                            <input type="text" id="new-item-name" placeholder="e.g. Veg Noodles" required>
                         </div>
                         <div class="input-group">
                             <label>Price (₹)</label>
@@ -217,6 +135,7 @@
                     </form>
                 </div>
 
+                <!-- Manage Existing Items -->
                 <div class="card">
                     <h2>Manage Current Menu</h2>
                     <div id="admin-menu-list"></div>
@@ -229,28 +148,28 @@
     <!-- Floating Checkout Bar -->
     <div id="cart-bar" class="cart-bar hidden">
         <div>
-            <div style="font-size: 11px; color: #666; font-weight: 700;">TOTAL AMOUNT</div>
-            <div style="font-size: 20px; font-weight: 800; color: #ff5722;">₹<span id="total-price">0</span></div>
+            <div style="font-size: 12px; color: #666;">Total Amount:</div>
+            <div style="font-size: 18px; font-weight: bold; color: #ff5722;">₹<span id="total-price">0</span></div>
         </div>
-        <button class="btn btn-success" style="width: auto; padding: 12px 24px; border-radius: 10px;" onclick="sendWhatsAppOrder()">
-            Order on WhatsApp
+        <button class="btn btn-success" style="width: auto; padding: 10px 20px;" onclick="sendWhatsAppOrder()">
+            Order via WhatsApp
         </button>
     </div>
 
     <script>
         const KITCHEN_WHATSAPP_NUMBER = "919315559363"; // Apna 10-digit WhatsApp number yahan dalein
-        const ADMIN_PIN_CODE = "1234";
+        const ADMIN_PIN_CODE = "123456";
 
         const defaultMenu = [
-            { id: 1, name: "Egg Chicken Roll", price: 100, img: "https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?auto=format&fit=crop&w=500&q=80" },
-            { id: 2, name: "Veg Manchurian Dry", price: 120, img: "https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=500&q=80" },
-            { id: 3, name: "Manchurian Gravy", price: 140, img: "https://images.unsplash.com/photo-1541696432-82c6da8ce7bf?auto=format&fit=crop&w=500&q=80" },
-            { id: 4, name: "Crispy Fried Momos", price: 110, img: "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?auto=format&fit=crop&w=500&q=80" },
-            { id: 5, name: "Veg Spring Roll", price: 90, img: "https://images.unsplash.com/photo-1606787366850-de63301c7bfc?auto=format&fit=crop&w=500&q=80" },
-            { id: 6, name: "Veg Kathi Roll", price: 80, img: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=500&q=80" },
-            { id: 7, name: "Chilli Potato", price: 90, img: "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=500&q=80" },
-            { id: 8, name: "Veg Fried Rice", price: 100, img: "https://images.unsplash.com/photo-1603133872878-684f208fb84b?auto=format&fit=crop&w=500&q=80" },
-            { id: 9, name: "Hakka Noodles", price: 90, img: "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=500&q=80" }
+            { id: 1, name: "Egg Roll", price: 100, img: "https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=300" },
+            { id: 2, name: "Veg Manchurian Dry", price: 120, img: "https://images.unsplash.com/photo-1525351484163-7529414344d8?w=300" },
+            { id: 3, name: "Manchurian Gravy", price: 140, img: "https://images.unsplash.com/photo-1541696432-82c6da8ce7bf?w=300" },
+            { id: 4, name: "Crispy Fried Momos", price: 110, img: "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=300" },
+            { id: 5, name: "Veg Spring Roll", price: 90, img: "https://images.unsplash.com/photo-1606787366850-de63301c7bfc?w=300" },
+            { id: 6, name: "Veg Kathi Roll", price: 80, img: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=300" },
+            { id: 7, name: "Chilli Potato", price: 90, img: "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=300" },
+            { id: 8, name: "Veg Fried Rice", price: 100, img: "https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=300" },
+            { id: 9, name: "Hakka Noodles", price: 90, img: "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=300" }
         ];
 
         let menuList = [];
@@ -258,22 +177,19 @@
         let customer = null;
 
         window.onload = function() {
-            const savedMenu = localStorage.getItem('aaru_menu_v6');
+            const savedMenu = localStorage.getItem('aaru_menu_v4');
             menuList = savedMenu ? JSON.parse(savedMenu) : defaultMenu;
             saveMenuData();
 
             const savedCustomer = localStorage.getItem('aaru_customer');
             if (savedCustomer) {
                 customer = JSON.parse(savedCustomer);
-                document.getElementById('cust-name').value = customer.name;
-                document.getElementById('cust-phone').value = customer.phone;
-                document.getElementById('cust-address').value = customer.address;
                 showCustomerMenu();
             }
         };
 
         function saveMenuData() {
-            localStorage.setItem('aaru_menu_v6', JSON.stringify(menuList));
+            localStorage.setItem('aaru_menu_v4', JSON.stringify(menuList));
         }
 
         function switchTab(tab) {
@@ -305,14 +221,12 @@
             document.getElementById('auth-section').classList.add('hidden');
             document.getElementById('menu-section').classList.remove('hidden');
             document.getElementById('logged-user-name').innerText = customer.name;
-            document.getElementById('logged-user-phone').innerText = customer.phone;
             renderCustomerMenu();
         }
 
-        function changeDetails() {
-            document.getElementById('auth-section').classList.remove('hidden');
-            document.getElementById('menu-section').classList.add('hidden');
-            document.getElementById('cart-bar').classList.add('hidden');
+        function logout() {
+            localStorage.removeItem('aaru_customer');
+            location.reload();
         }
 
         function renderCustomerMenu() {
@@ -321,31 +235,17 @@
 
             menuList.forEach(item => {
                 const qty = cart[item.id] || 0;
-                
-                let actionHtml = '';
-                if (qty === 0) {
-                    actionHtml = `<button class="add-btn" onclick="updateQty(${item.id}, 1)">+ ADD</button>`;
-                } else {
-                    actionHtml = `
-                        <div class="qty-controls">
-                            <button class="qty-btn" onclick="updateQty(${item.id}, -1)">-</button>
-                            <span class="qty-count">${qty}</span>
-                            <button class="qty-btn" onclick="updateQty(${item.id}, 1)">+</button>
-                        </div>
-                    `;
-                }
-
                 container.innerHTML += `
-                    <div class="food-card">
-                        <div class="food-img-container">
-                            <img src="${item.img}" alt="${item.name}" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=500&q=80';">
+                    <div class="menu-item-card">
+                        <img src="${item.img}" alt="${item.name}" onerror="this.onerror=null;this.src='https://dummyimage.com/200x200/ff5722/ffffff.png&text=Food+Item';">
+                        <div class="item-info">
+                            <h4>${item.name}</h4>
+                            <p>₹${item.price}</p>
                         </div>
-                        <div class="food-details">
-                            <div class="food-title">${item.name}</div>
-                            <div class="food-price">₹${item.price}</div>
-                        </div>
-                        <div class="food-action">
-                            ${actionHtml}
+                        <div class="qty-controls">
+                            <button class="qty-btn minus" onclick="updateQty(${item.id}, -1)">-</button>
+                            <span style="font-weight:bold; min-width:15px; text-align:center;">${qty}</span>
+                            <button class="qty-btn" onclick="updateQty(${item.id}, 1)">+</button>
                         </div>
                     </div>
                 `;
@@ -388,7 +288,7 @@
             orderText += `*Customer Details:*\n`;
             orderText += ` Name: ${customer.name}\n`;
             orderText += ` Phone: ${customer.phone}\n`;
-            orderText += ` Address: ${customer.address}\n\n`;
+            orderText += ` Delivery Address: ${customer.address}\n\n`;
             orderText += `*Order Items:*\n`;
 
             let total = 0;
@@ -445,7 +345,7 @@
                 id: Date.now(),
                 name: nameInput.value.trim(),
                 price: parseFloat(priceInput.value),
-                img: imgInput.value.trim() || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=500&q=80'
+                img: imgInput.value.trim() || 'https://dummyimage.com/200x200/ff5722/ffffff.png&text=Food+Item'
             };
 
             menuList.push(newItem);
