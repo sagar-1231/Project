@@ -47,7 +47,7 @@
         .portion-label { font-weight: bold; min-width: 32px; text-align: right; }
 
         .qty-controls { display: flex; align-items: center; gap: 6px; }
-        .qty-btn { background: #ff5722; color: white; border: none; width: 26px; height: 26px; border-radius: 50%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: justify; align-content: center; justify-content: center; font-size: 14px; }
+        .qty-btn { background: #ff5722; color: white; border: none; width: 26px; height: 26px; border-radius: 50%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; }
         .qty-btn.minus { background: #ddd; color: #333; }
 
         /* Search & Filter UI */
@@ -275,13 +275,12 @@
         ];
 
         let menuList = [];
-        let cart = {}; // format: { '1_half': qty, '1_full': qty }
+        let cart = {}; 
         let customer = null;
         let selectedCategory = 'All';
         let adminPinCode = "123456";
 
         window.onload = function() {
-            // Storage Versioning Check (v6)
             const savedMenu = localStorage.getItem('aaru_menu_v6');
             menuList = savedMenu ? JSON.parse(savedMenu) : defaultMenu;
             saveMenuData();
@@ -323,7 +322,6 @@
             };
             localStorage.setItem('aaru_customer', JSON.stringify(customer));
             
-            // Save to Customer Database
             let customersList = JSON.parse(localStorage.getItem('aaru_customers_db') || '[]');
             if (!customersList.some(c => c.phone === customer.phone)) {
                 customersList.push({...customer, joinedAt: new Date().toLocaleDateString()});
@@ -467,7 +465,6 @@
                 }
             }
 
-            // Save Order to Local Storage History
             let ordersLog = JSON.parse(localStorage.getItem('aaru_orders_log') || '[]');
             ordersLog.unshift({
                 id: 'ORD' + Date.now().toString().slice(-5),
@@ -479,7 +476,6 @@
             });
             localStorage.setItem('aaru_orders_log', JSON.stringify(ordersLog));
 
-            // Generate WhatsApp Text
             let orderText = `*New Order - Aaru's Kitchen*\n`;
             orderText += `*(Ganesh Mandir, Mondongri - 480331)*\n\n`;
             orderText += `*Customer Details:*\n`;
