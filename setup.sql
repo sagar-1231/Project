@@ -1,5 +1,5 @@
 -- Supabase > SQL Editor mein ye poora paste karke Run dabayein (sirf ek baar).
--- PEHLE neeche wali line mein apna admin email likhein (wahi email jisse admin login karenge).
+-- Admin email: sd.rao8@gmail.com (pehle se bhara hua hai, kuch badalna nahi hai).
 create or replace function public.is_admin() returns boolean language sql stable as
 $$ select lower(coalesce(auth.jwt()->>'email','')) = lower('sd.rao8@gmail.com') $$;
 
