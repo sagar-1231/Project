@@ -3,6 +3,11 @@
   var $ = function (s) { return document.querySelector(s); };
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function rs(n) { return "₹" + (Math.round(n * 100) / 100); }
+  function prof() { try { var x = JSON.parse(localStorage.getItem("ak_prof_" + (S.me ? S.me.phone : ""))) || {}; x.addrs = x.addrs || []; x.oaddr = x.oaddr || {}; return x; } catch (e) { return { addrs: [], oaddr: {} }; } }
+  function saveProf(x) { try { localStorage.setItem("ak_prof_" + S.me.phone, JSON.stringify(x)); } catch (e) {} }
+  function match(i) { return (!vegOnly || i.type !== "egg") && (!q || (i.name + " " + i.desc + " " + i.cat).toLowerCase().indexOf(q.toLowerCase()) >= 0); }
+  function feeFor(t, ty) { var s = S.settings; return ty === "delivery" && s.deliveryFee > 0 && !(s.freeAbove > 0 && t >= s.freeAbove) ? s.deliveryFee : 0; }
+  function beep() { try { var c = new (window.AudioContext || window.webkitAudioContext)(), o = c.createOscillator(), g = c.createGain(); o.connect(g); g.connect(c.destination); o.frequency.value = 880; g.gain.value = 0.2; o.start(); setTimeout(function () { o.stop(); c.close(); }, 700); } catch (e) {} }
   function fmtTime(ts) { return new Date(ts).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }); }
   function sameDay(a, b) { return new Date(a).toDateString() === new Date(b).toDateString(); }
 
@@ -11,7 +16,7 @@
   var cart = {}, view = "shop", active = "Sab", tab = "orders", modal = null, focusId = null, lastOrder = null, ordersFilter = "all", busy = false;
   var adminOk = false, draft = { name: "", note: "", type: "takeaway", addr: "" };
   var otp = { phone: "", step: "phone", err: "", dev: "" };
-  var adm = { err: "" };
+  var adm = { err: "" }, mine = null, q = "", vegOnly = false, oq = "";
   var STATUS = { "new": "Naya", prep: "Ban raha hai", done: "Pura hua" };
 
   /* ---------- network ---------- */
@@ -53,14 +58,15 @@
   function shopHTML() {
     var s = S.settings, tt = cartTotals(), cs = cats();
     var h = '<header class="hero full"><div class="wrap"><div class="topline"><span class="kicker">Chinese · Momos · Rolls</span><div class="who">' +
-      (S.me ? '<span>Hi, ' + esc(S.me.name || S.me.phone) + '</span><button class="pill" data-act="logout">Logout</button>' : '<button class="pill" data-act="openLogin">Login</button>') +
-      '</div></div><h1 class="brand">' + esc(s.name) + '</h1><p class="sub">Garam, tikha aur taaza. Order karein, WhatsApp pe seedha bhejein.</p><span class="open">' + esc(s.hours) + '</span></div></header>';
+      (S.me ? '<span>Hi, ' + esc(S.me.name || S.me.phone) + '</span><button class="pill" data-act="openMine">Mere orders</button><button class="pill" data-act="logout">Logout</button>' : '<button class="pill" data-act="openLogin">Login</button>') +
+      '</div></div><h1 class="brand">' + esc(s.name) + '</h1><p class="sub">Garam, tikha aur taaza. Order karein, WhatsApp pe seedha bhejein.</p><span class="open">' + esc(s.hours) + '</span>' + (s.open === false ? ' <span class="open" style="background:#b3261e;color:#fff">Abhi band hai</span>' : '') + '</div></header>';
     h += '<div class="cats-bar full"><div class="wrap"><div class="cats">' + ["Sab"].concat(cs).map(function (c) { return '<button class="chip" data-act="cat" data-v="' + esc(c) + '" aria-pressed="' + (c === active) + '">' + esc(c) + '</button>'; }).join("") + '</div></div></div>';
-    h += '<main class="wrap">';
+    h += '<main class="wrap"><div class="field"><input type="search" id="qIn" placeholder="Dish dhundhein (jaise momos, roll)" value="' + esc(q) + '"></div><div class="cats"><button class="chip" data-act="veg" aria-pressed="' + vegOnly + '">Sirf shakahari</button></div>';
     cs.forEach(function (c) {
       if (active !== "Sab" && active !== c) return;
+      var L = S.menu.filter(function (i) { return i.cat === c && match(i); }); if (!L.length) return;
       h += '<h2 class="group">' + esc(c) + '</h2>';
-      S.menu.filter(function (i) { return i.cat === c; }).forEach(function (i) {
+      L.forEach(function (i) {
         var nm = '<div class="nm"><i class="vt ' + (i.type === "egg" ? "egg" : "") + '" title="' + (i.type === "egg" ? "Egg" : "Shakahari") + '"></i>' + esc(i.name) + '</div>';
         if (i.half != null) {
           h += '<div class="item half' + (i.avail ? '' : ' off') + '">' + nm + '<p class="dsc">' + esc(i.desc) + '</p><div class="sizes">' +
@@ -70,7 +76,7 @@
         }
       });
     });
-    if (!S.menu.length) h += '<p class="empty">Menu abhi khaali hai.</p>';
+    if (!S.menu.length) h += '<p class="empty">Menu abhi khaali hai.</p>'; else if (!S.menu.some(match)) h += '<p class="empty">Kuch nahi mila. Search ya filter badal kar dekhein.</p>';
     h += '<p class="note">Hara nishaan = shakahari, bhura nishaan = anda.</p>';
     h += '<section class="info"><h2>Dukaan ki jaankari</h2><dl><dt>Timing</dt><dd>' + esc(s.hours) + '</dd><dt>Pata</dt><dd>' + esc(s.address) + '</dd><dt>Order</dt><dd>Takeaway aur Delivery</dd></dl></section>';
     h += '<div class="foot"><button class="link" data-act="openAdmin">Admin</button></div></main>';
@@ -80,16 +86,34 @@
   function sheet(inner) { return '<div class="scrim" data-act="scrim"><div class="sheet" role="dialog" aria-modal="true">' + inner + '</div></div>'; }
   function modalHTML() {
     var h;
+    if (modal === "mine") {
+      h = '<h2>Mere orders <button class="x" data-act="closeModal" aria-label="Band karein">×</button></h2>';
+      if (!mine) return sheet(h + '<p class="hint">Load ho raha hai...</p>');
+      if (mine.err) return sheet(h + '<p class="err">' + esc(mine.err) + '</p>');
+      if (!mine.count) return sheet(h + '<p class="hint">Abhi tak koi order nahi hai. Pehla order karke dekhein!</p>');
+      h += '<p class="hint">Status apne aap update hota rehta hai. Ab tak <b>' + mine.count + '</b> order, kul <b>' + rs(mine.spent) + '</b>.' + (mine.count > mine.orders.length ? ' Neeche pichle ' + mine.orders.length + ' dikh rahe hain.' : '') + '</p>';
+      mine.orders.forEach(function (o) {
+        h += '<div class="card"><p><b>' + esc(o.no) + '</b> · ' + fmtTime(o.ts) + ' <span class="badge' + (o.status === "done" ? " done" : "") + '">' + esc(STATUS[o.status] || o.status) + '</span></p>' +
+          '<p class="hint">' + (o.type === "delivery" ? "Delivery" + (prof().oaddr[o.no] ? " · " + esc(prof().oaddr[o.no]) : "") : "Takeaway") + '</p>' +
+          o.items.map(function (i) { return '<p>' + i.qty + ' × ' + esc(i.name) + ' — ' + rs(i.qty * i.price) + '</p>'; }).join("") + '<p><b>Total: ' + rs(o.total) + '</b></p><button class="btn sm" data-act="reorder" data-no="' + esc(o.no) + '">Dobara order karein</button></div>';
+      });
+      return sheet(h);
+    }
     if (modal === "cart") {
       if (lastOrder) return sheet('<h2>Order mil gaya <button class="x" data-act="closeModal" aria-label="Band karein">×</button></h2><p>Aapka order <b>' + esc(lastOrder.no) + '</b> save ho gaya. Ab WhatsApp kholkar message bhej dein, tabhi dukaan ko order dikhega.</p><a class="btn green" target="_blank" rel="noopener" href="' + esc(lastOrder.url) + '">WhatsApp kholein</a><button class="btn" data-act="closeModal">Theek hai</button>');
       var rows = cartLines().map(function (x) { return '<div class="ln"><span>' + esc(x.i.name + sizeLabel(x.i, x.s)) + '</span>' + stepper(x.i.id, x.q, x.s) + '<b>' + rs(priceOf(x.i, x.s) * x.q) + '</b></div>'; }).join("");
       var tt = cartTotals();
       h = '<h2>Aapka order <button class="x" data-act="closeModal" aria-label="Band karein">×</button></h2>' + (rows || '<p class="empty">Cart khaali hai.</p>');
       if (rows) {
-        h += '<div class="total"><span>Total</span><span>' + rs(tt.t) + '</span></div>';
-        h += '<div class="field"><label for="cName">Aapka naam</label><input type="text" id="cName" autocomplete="name" maxlength="60" value="' + esc(draft.name || (S.me ? S.me.name : "")) + '" data-chg="draft" data-f="name"></div>';
+        var fee = feeFor(tt.t, draft.type), st = S.settings;
+        if (fee) h += '<div class="ln"><span>Delivery charge</span><b>' + rs(fee) + '</b></div>';
+        if (draft.type === "delivery" && st.freeAbove > 0 && tt.t < st.freeAbove) h += '<p class="hint">' + rs(st.freeAbove - tt.t) + ' ka aur order karein, delivery free ho jayegi.</p>';
+        if (st.minOrder > tt.t) h += '<p class="err">Kam se kam ' + rs(st.minOrder) + ' ka order chahiye.</p>';
+        if (st.open === false) h += '<p class="err">Dukaan abhi band hai, abhi order nahi ho sakta.</p>';
+        h += '<div class="total"><span>Total</span><span>' + rs(tt.t + fee) + '</span></div>';
+        h += '<div class="field"><label for="cName">Aapka naam</label><input type="text" id="cName" autocomplete="name" maxlength="60" value="' + esc(draft.name || (S.me ? S.me.name || prof().name || "" : "")) + '" data-chg="draft" data-f="name"></div>';
         h += '<div class="field"><label for="cType">Order kaise lenge?</label><select id="cType" data-chg="draft" data-f="type"><option value="takeaway"' + (draft.type === "takeaway" ? " selected" : "") + '>Takeaway (dukaan se le jaunga)</option><option value="delivery"' + (draft.type === "delivery" ? " selected" : "") + '>Delivery (ghar par chahiye)</option></select></div>';
-        if (draft.type === "delivery") h += '<div class="field"><label for="cAddr">Delivery ka poora pata</label><textarea id="cAddr" maxlength="300" placeholder="Ghar ka number, gali, mohalla, landmark" data-chg="draft" data-f="addr">' + esc(draft.addr) + '</textarea></div>';
+        if (draft.type === "delivery") h += '<div class="field"><label for="cAddr">Delivery ka poora pata</label><textarea id="cAddr" maxlength="300" placeholder="Ghar ka number, gali, mohalla, landmark" data-chg="draft" data-f="addr">' + esc(draft.addr || prof().addrs[0] || "") + '</textarea>' + (prof().addrs.length > 1 ? '<p class="hint">Pichle pate:</p><div class="cats">' + prof().addrs.map(function (a, i) { return '<button type="button" class="chip" data-act="useAddr" data-i="' + i + '">' + esc(a.length > 28 ? a.slice(0, 28) + "…" : a) + '</button>'; }).join("") + '</div>' : '') + '</div>';
         h += '<div class="field"><label for="cNote">Kuch khaas batana ho (optional)</label><textarea id="cNote" maxlength="200" placeholder="Jaise: kam tikha" data-chg="draft" data-f="note">' + esc(draft.note) + '</textarea></div>';
         h += S.me ? '<p class="hint">Mobile: +91 ' + esc(S.me.phone) + '</p><button class="btn green" data-act="placeOrder"' + (busy ? " disabled" : "") + '>' + (busy ? "Bhej rahe hain..." : "Order karein aur WhatsApp pe bhejein") + '</button>' : '<p class="hint">Order bhejne ke liye mobile number se login karna hoga.</p><button class="btn primary" data-act="openLogin">Login karke order karein</button>';
       }
@@ -123,18 +147,18 @@
     return h + '</div>';
   }
   function adminOrders() {
-    var list = AD.orders.slice().sort(function (a, b) { return b.ts - a.ts; }).filter(function (o) { return ordersFilter === "all" || o.status === ordersFilter; });
-    var h = '<div class="row2"><div class="field"><label for="ofilter">Dikhayein</label><select id="ofilter" data-chg="ofilter"><option value="all">Sab orders</option>' + Object.keys(STATUS).map(function (k) { return '<option value="' + k + '"' + (ordersFilter === k ? " selected" : "") + '>' + STATUS[k] + '</option>'; }).join("") + '</select></div><div><button class="btn sm" data-act="exp" data-v="orders">Orders CSV download</button></div></div>';
+    var list = AD.orders.slice().sort(function (a, b) { return b.ts - a.ts; }).filter(function (o) { return (ordersFilter === "all" || o.status === ordersFilter) && (!oq || (o.no + " " + o.name + " " + o.phone).toLowerCase().indexOf(oq.toLowerCase()) >= 0); });
+    var h = '<div class="field"><input type="search" id="oqIn" placeholder="Order no, naam ya mobile se dhundhein" value="' + esc(oq) + '"></div><div class="row2"><div class="field"><label for="ofilter">Dikhayein</label><select id="ofilter" data-chg="ofilter"><option value="all">Sab orders</option>' + Object.keys(STATUS).map(function (k) { return '<option value="' + k + '"' + (ordersFilter === k ? " selected" : "") + '>' + STATUS[k] + '</option>'; }).join("") + '</select></div><div><button class="btn sm" data-act="exp" data-v="orders">Orders CSV download</button></div></div>';
     if (!list.length) return h + '<p class="empty">Abhi koi order nahi hai.</p>';
     list.forEach(function (o) {
       h += '<div class="card"><div class="ohead"><span>' + esc(o.no) + ' · ' + fmtTime(o.ts) + '</span><span class="badge ' + (o.status === "done" ? "done" : "") + '">' + STATUS[o.status] + '</span></div>' +
         '<div><b>' + esc(o.name) + '</b> · +91 ' + esc(o.phone) + ' · <span class="badge' + (o.type === "delivery" ? '' : ' done') + '">' + (o.type === "delivery" ? "Delivery" : "Takeaway") + '</span></div>' +
         (o.type === "delivery" && o.addr ? '<div>Pata: ' + esc(o.addr) + '</div>' : '') +
         '<div>' + o.items.map(function (i) { return esc(i.qty + " × " + i.name) + " (" + rs(i.qty * i.price) + ")"; }).join("<br>") + '</div>' +
-        (o.note ? '<div class="hint">Note: ' + esc(o.note) + '</div>' : '') +
+        (o.note ? '<div class="hint">Note: ' + esc(o.note) + '</div>' : '') + (o.fee ? '<div class="hint">Delivery charge: ' + rs(o.fee) + '</div>' : '') +
         '<div class="ohead"><span>Total</span><span>' + rs(o.total) + '</span></div>' +
         '<div class="row2"><div class="field"><label for="st' + o.id + '">Status</label><select id="st' + o.id + '" data-chg="status" data-id="' + o.id + '">' + Object.keys(STATUS).map(function (k) { return '<option value="' + k + '"' + (o.status === k ? " selected" : "") + '>' + STATUS[k] + '</option>'; }).join("") + '</select></div>' +
-        '<div class="bar-actions"><a class="btn sm" target="_blank" rel="noopener" href="https://wa.me/91' + esc(o.phone) + '">Customer ko WhatsApp</a><button class="btn sm danger" data-act="delOrder" data-id="' + o.id + '">Delete</button></div></div></div>';
+        '<div class="bar-actions"><a class="btn sm" target="_blank" rel="noopener" href="https://wa.me/91' + esc(o.phone) + '">Customer ko WhatsApp</a><button class="btn sm" data-act="printBill" data-id="' + o.id + '">Print bill</button><button class="btn sm danger" data-act="delOrder" data-id="' + o.id + '">Delete</button></div></div></div>';
     });
     return h;
   }
@@ -170,13 +194,15 @@
   }
   function adminSettings() {
     var s = AD.settings;
-    return '<div class="card"><h3>Dukaan ki jaankari</h3>' +
+    return '<div class="card"><h3>Dukaan chalu / band</h3><label><input type="checkbox" id="sOpen" data-chg="set" data-f="open"' + (s.open === false ? '' : ' checked') + '> Abhi order le rahe hain (band karne par customers order nahi kar payenge)</label></div>' +
+      '<div class="card"><h3>Delivery aur minimum order</h3><div class="field"><label for="sFee">Delivery charge (₹, 0 = free)</label><input type="number" id="sFee" min="0" inputmode="numeric" value="' + (s.deliveryFee || 0) + '" data-chg="set" data-f="deliveryFee"></div><div class="field"><label for="sFree">Itne ₹ ke order par delivery free (0 = kabhi nahi)</label><input type="number" id="sFree" min="0" inputmode="numeric" value="' + (s.freeAbove || 0) + '" data-chg="set" data-f="freeAbove"></div><div class="field"><label for="sMin">Kam se kam order (₹, 0 = koi limit nahi)</label><input type="number" id="sMin" min="0" inputmode="numeric" value="' + (s.minOrder || 0) + '" data-chg="set" data-f="minOrder"></div></div>' +
+      '<div class="card"><h3>Dukaan ki jaankari</h3>' +
       '<div class="field"><label for="sName">Dukaan ka naam</label><input type="text" id="sName" maxlength="60" value="' + esc(s.name) + '" data-chg="set" data-f="name"></div>' +
       '<div class="field"><label for="sWa">WhatsApp number (order yahin aayenge)</label><input type="tel" id="sWa" inputmode="numeric" maxlength="13" placeholder="98XXXXXXXX" value="' + esc(s.whatsapp) + '" data-chg="set" data-f="whatsapp"></div>' +
       '<div class="field"><label for="sHours">Timing</label><input type="text" id="sHours" maxlength="120" value="' + esc(s.hours) + '" data-chg="set" data-f="hours"></div>' +
       '<div class="field"><label for="sAddr">Pata</label><input type="text" id="sAddr" maxlength="200" value="' + esc(s.address) + '" data-chg="set" data-f="address"></div></div>' +
       '<div class="card"><h3>Password badlein</h3><div class="field"><label for="pOld">Purana password</label><input type="password" id="pOld" autocomplete="current-password"></div><div class="field"><label for="pNew">Naya password (kam se kam 8 akshar)</label><input type="password" id="pNew" autocomplete="new-password"></div><div class="field"><label for="pNew2">Naya password dobara</label><input type="password" id="pNew2" autocomplete="new-password"></div><button class="btn primary" data-act="chgPass">Password badlein</button></div>' +
-      '<div class="card"><h3>Backup</h3><p class="hint">Sara data Supabase mein surakshit hai. Phir bhi kabhi kabhi backup download karke rakhein. Kabhi kabhi backup download karke surakshit rakhein.</p><div class="bar-actions"><button class="btn sm" data-act="exp" data-v="backup">Backup download</button></div></div>';
+      '<div class="card"><h3>Backup</h3><p class="hint">Sara data Supabase mein surakshit hai. Phir bhi kabhi kabhi backup download karke rakhein.</p><div class="bar-actions"><button class="btn sm" data-act="exp" data-v="backup">Backup download</button></div></div>';
   }
 
   /* ---------- render ---------- */
@@ -197,6 +223,25 @@
     cat: function (t) { active = t.dataset.v; render(); },
     add: function (t) { changeCart(+t.dataset.id, t.dataset.s || "f", 1); },
     dec: function (t) { changeCart(+t.dataset.id, t.dataset.s || "f", -1); },
+    useAddr: function (t) { draft.addr = prof().addrs[+t.dataset.i] || ""; focusId = "cAddr"; render(); },
+    veg: function () { vegOnly = !vegOnly; render(); },
+    reorder: function (t) {
+      var o = mine && mine.orders.find(function (x) { return x.no === t.dataset.no; }), miss = 0; if (!o) return;
+      o.items.forEach(function (i) { var m = S.menu.find(function (x) { return x.id === i.id; }), s = i.size === "h" ? "h" : "f";
+        if (m && m.avail && (s !== "h" || m.half != null)) cart[ck(m.id, s)] = Math.min(50, (cart[ck(m.id, s)] || 0) + i.qty); else miss++; });
+      modal = "cart"; if (miss) toast(miss + " item abhi available nahi hai"); render();
+    },
+    printBill: function (t) {
+      var o = AD.orders.find(function (x) { return x.id === +t.dataset.id; }); if (!o) return;
+      var w = window.open("", "_blank", "width=380,height=600"); if (!w) return toast("Popup allow karein");
+      w.document.write('<title>' + esc(o.no) + '</title><body style="font:14px monospace;width:300px"><h3 style="text-align:center">' + esc(S.settings.name) + '</h3><p>' + esc(o.no) + ' · ' + fmtTime(o.ts) + '<br>' + esc(o.name) + ' · ' + esc(o.phone) + '<br>' + (o.type === "delivery" ? "DELIVERY: " + esc(o.addr) : "TAKEAWAY") + '</p><hr>' +
+        o.items.map(function (i) { return esc(i.qty + " x " + i.name) + " — " + rs(i.qty * i.price); }).join("<br>") + '<hr>' + (o.fee ? "Delivery: " + rs(o.fee) + "<br>" : "") + '<b>Total: ' + rs(o.total) + '</b>' + (o.note ? '<p>Note: ' + esc(o.note) + '</p>' : '') + '<p style="text-align:center">Dhanyavaad!</p><script>onload=function(){print()}<\/script>');
+      w.document.close();
+    },
+    openMine: function () {
+      mine = null; modal = "mine"; render();
+      api("GET", "/api/myorders").then(function (r) { mine = r.ok ? r.data : { err: r.data.error || "Orders nahi mile." }; if (modal === "mine") render(); });
+    },
     openCart: function () { lastOrder = null; modal = "cart"; render(); },
     closeModal: function () { modal = null; lastOrder = null; render(); },
     scrim: function (t, e) { if (e.target === t) A.closeModal(); },
@@ -239,6 +284,8 @@
       });
     },
     placeOrder: function () {
+      if (S.settings.open === false) return toast("Dukaan abhi band hai");
+      if (S.settings.minOrder > cartTotals().t) return toast("Kam se kam " + rs(S.settings.minOrder) + " ka order chahiye");
       var name = ($("#cName").value || "").trim(), ty = $("#cType").value === "delivery" ? "delivery" : "takeaway", addr = ty === "delivery" ? ($("#cAddr").value || "").trim() : "", note = ($("#cNote").value || "").trim();
       if (!name) { toast("Apna naam likhein"); $("#cName").focus(); return; }
       if (ty === "delivery" && addr.length < 8) { toast("Delivery ka poora pata likhein"); $("#cAddr").focus(); return; }
@@ -248,7 +295,8 @@
       api("POST", "/api/orders", { name: name, type: ty, addr: addr, note: note, items: items }).then(function (r) {
         busy = false;
         if (r.ok) {
-          lastOrder = { no: r.data.no, url: r.data.waUrl }; cart = {}; draft = { name: name, note: "", type: "takeaway", addr: "" }; if (S.me) S.me.name = name; render();
+          lastOrder = { no: r.data.no, url: r.data.waUrl }; cart = {};
+          if (S.me) { var pf = prof(); pf.name = name; if (ty === "delivery") { pf.addrs = [addr].concat(pf.addrs.filter(function (a) { return a !== addr; })).slice(0, 3); pf.oaddr[r.data.no] = addr; var ks = Object.keys(pf.oaddr); if (ks.length > 60) delete pf.oaddr[ks[0]]; } saveProf(pf); } draft = { name: name, note: "", type: "takeaway", addr: "" }; if (S.me) S.me.name = name; render();
           var w = null; try { w = window.open(lastOrder.url, "_blank"); } catch (e) {}
           if (!w) toast("Neeche WhatsApp kholein dabayein");
         } else if (r.status === 401) { S.me = null; modal = "login"; otp = { phone: "", step: "phone", err: "Login ki avadhi khatam. Dobara login karein.", dev: "" }; render(); }
@@ -321,7 +369,9 @@
     }
   });
   document.addEventListener("input", function (e) {
-    var t = e.target; if (t.dataset && t.dataset.chg === "draft" && t.dataset.f !== "type") draft[t.dataset.f] = t.value;
+    var t = e.target;
+    if (t.id === "qIn" || t.id === "oqIn") { if (t.id === "qIn") q = t.value; else oq = t.value; focusId = t.id; render(); var el2 = document.getElementById(t.id); if (el2) el2.setSelectionRange(t.value.length, t.value.length); return; }
+    if (t.dataset && t.dataset.chg === "draft" && t.dataset.f !== "type") draft[t.dataset.f] = t.value;
   });
   document.addEventListener("change", function (e) {
     var t = e.target, k = t.dataset && t.dataset.chg; if (!k) return;
@@ -340,11 +390,11 @@
         if (f === "cat") render();
       });
     } else if (k === "set") {
-      var b2 = {}; b2[t.dataset.f] = t.value;
+      var b2 = {}; b2[t.dataset.f] = t.type === "checkbox" ? t.checked : t.value;
       api("PUT", "/api/admin/settings", b2).then(function (r) {
         if (!r.ok) { toast(r.data.error || "Save nahi hua"); return loadAdmin().then(render); }
         AD.settings = r.data.settings; S.settings = r.data.settings; document.title = S.settings.name; toast("Save ho gaya");
-        if (t.dataset.f === "whatsapp") render();
+        if (/^(whatsapp|open)$/.test(t.dataset.f)) render();
       });
     }
   });
@@ -357,10 +407,11 @@
     api("GET", "/api/admin/data").then(function (r) {
       if (!r.ok) { if (r.status === 401) { adminOk = false; AD = null; view = "shop"; render(); } return; }
       var sig = r.data.orders.map(function (o) { return o.id + o.status; }).join(",");
-      if (known !== null && r.data.orders.length > AD.orders.length) toast("Naya order aaya!");
+      if (known !== null && r.data.orders.length > AD.orders.length) { toast("Naya order aaya!"); beep(); }
       if (sig !== known) { known = sig; AD = r.data; S.menu = r.data.menu; render(); }
     });
-  }, 20000);
+  }, 10000);
 
+  setInterval(function () { if (modal !== "mine" || !S.me) return; api("GET", "/api/myorders").then(function (r) { if (r.ok && modal === "mine") { mine = r.data; render(); } }); }, 15000);
   loadPublic().then(render);
 })();

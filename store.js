@@ -2,7 +2,7 @@
 /* Browser se seedha Supabase se baat karta hai. app.js ko lagta hai ye ek server hai. */
 (function () {
   var C = window.APP_CONFIG || {}, URL = String(C.supabaseUrl || "").replace(/\/+$/, ""), KEY = C.supabaseAnonKey || "";
-  var TK = "ak_tok", RF = "ak_ref", EM = "ak_em", ME = "ak_me", settingsCache = { name: "Aaru's Kitchen", whatsapp: "", hours: "", address: "" };
+  var TK = "ak_tok", RF = "ak_ref", EM = "ak_em", ME = "ak_me", settingsCache = { name: "Aaru's Kitchen", whatsapp: "", hours: "", address: "", open: true, deliveryFee: 0, minOrder: 0, freeAbove: 0 };
   function ok(d) { return { ok: true, status: 200, data: d || { ok: true } }; }
   function bad(s, m) { return { ok: false, status: s, data: { error: m } }; }
   function tok() { return sessionStorage.getItem(TK); }
@@ -26,7 +26,7 @@
   }
   function fail(r) { return bad(/Menu badal|available nahi|half nahi/.test(msg(r)) ? 409 : (r.status === 401 ? 401 : r.status || 400), msg(r)); }
   function toItem(r) { return { id: r.id, name: r.name, cat: r.cat, price: +r.price, half: r.half == null ? null : +r.half, type: r.type, desc: r.descr || "", avail: !!r.avail }; }
-  function toOrder(r) { return { id: r.id, no: r.no, ts: +r.ts, name: r.name, phone: r.phone, type: r.type, addr: r.addr || "", note: r.note || "", items: r.items || [], total: +r.total, status: r.status }; }
+  function toOrder(r) { return { id: r.id, no: r.no, ts: +r.ts, name: r.name, phone: r.phone, type: r.type, addr: r.addr || "", note: r.note || "", items: r.items || [], total: +r.total, fee: +r.fee || 0, status: r.status }; }
   function money(n) { return Math.round(n * 100) / 100; }
   function str(v, n) { return String(v == null ? "" : v).trim().slice(0, n); }
   function fields(b, row) {
@@ -39,7 +39,7 @@
     if ("avail" in b) row.avail = !!b.avail;
     return null;
   }
-  function loadSettings() { return rest("GET", "/rest/v1/settings?select=*&id=eq.1").then(function (r) { if (r.ok && r.data && r.data[0]) { var s = r.data[0]; settingsCache = { name: s.name, whatsapp: s.whatsapp || "", hours: s.hours || "", address: s.address || "" }; } return r; }); }
+  function loadSettings() { return rest("GET", "/rest/v1/settings?select=*&id=eq.1").then(function (r) { if (r.ok && r.data && r.data[0]) { var s = r.data[0]; settingsCache = { name: s.name, whatsapp: s.whatsapp || "", hours: s.hours || "", address: s.address || "", open: s.open !== false, deliveryFee: +s.delivery_fee || 0, minOrder: +s.min_order || 0, freeAbove: +s.free_above || 0 }; } return r; }); }
   function custs(orders) {
     var m = {}; orders.forEach(function (o) { var c = m[o.phone] || (m[o.phone] = { phone: o.phone, name: o.name, orders: 0, spent: 0, first: o.ts, last: o.ts }); c.name = o.name; c.orders++; c.spent = money(c.spent + o.total); c.first = Math.min(c.first, o.ts); c.last = Math.max(c.last, o.ts); });
     return Object.keys(m).map(function (k) { return m[k]; });
@@ -71,6 +71,10 @@
       var p = String(b.phone || "").replace(/\D/g, ""); if (!/^[6-9]\d{9}$/.test(p)) return Promise.resolve(bad(400, "Sahi 10 digit mobile number daalein."));
       var old = me(), u = { phone: p, name: old && old.phone === p ? old.name : "" }; localStorage.setItem(ME, JSON.stringify(u)); return Promise.resolve(ok({ me: u }));
     }
+    if (url === "/api/myorders") {
+      var mu = me(); if (!mu) return Promise.resolve(bad(401, "Login karein."));
+      return rest("POST", "/rest/v1/rpc/my_orders", { p_phone: mu.phone }).then(function (r) { return r.ok ? ok(r.data) : fail(r); });
+    }
     if (url === "/api/logout") { localStorage.removeItem(ME); return Promise.resolve(ok()); }
     if (url === "/api/orders") {
       var u2 = me(); if (!u2) return Promise.resolve(bad(401, "Login karein."));
@@ -78,7 +82,7 @@
         if (!r.ok) return fail(r); var o = r.data, s = settingsCache, type = b.type === "delivery" ? "delivery" : "takeaway", name = String(b.name).trim();
         u2.name = name; localStorage.setItem(ME, JSON.stringify(u2));
         var text = "*Naya order - " + s.name + "*\nOrder no: " + o.no + "\nNaam: " + name + "\nMobile: " + u2.phone + "\n" + (type === "delivery" ? "*Delivery*\nPata: " + String(b.addr).trim() : "*Takeaway*") + "\n\n" +
-          o.items.map(function (i) { return i.qty + " x " + i.name + " = ₹" + money(i.qty * i.price); }).join("\n") + "\n\n*Total: ₹" + money(o.total) + "*" + (b.note ? "\nNote: " + String(b.note).trim() : "");
+          o.items.map(function (i) { return i.qty + " x " + i.name + " = ₹" + money(i.qty * i.price); }).join("\n") + (o.fee ? "\nDelivery charge: ₹" + money(o.fee) : "") + "\n\n*Total: ₹" + money(o.total) + "*" + (b.note ? "\nNote: " + String(b.note).trim() : "");
         var d = String(s.whatsapp || "").replace(/\D/g, ""); if (d.length === 10) d = "91" + d;
         return ok({ ok: true, no: o.no, total: o.total, waUrl: "https://wa.me/" + d + "?text=" + encodeURIComponent(text) });
       });
@@ -100,7 +104,9 @@
     if (url === "/api/admin/settings") {
       var row = {}; ["name", "whatsapp", "hours", "address"].forEach(function (k) { if (k in b) row[k] = str(b[k], k === "address" ? 200 : k === "hours" ? 120 : k === "whatsapp" ? 13 : 60); });
       if ("name" in row && !row.name) return Promise.resolve(bad(400, "Dukaan ka naam likhein."));
-      return rest("PATCH", "/rest/v1/settings?id=eq.1", row, "return=representation").then(function (r) { if (!r.ok) return fail(r); settingsCache = Object.assign({}, settingsCache, row); return ok({ settings: settingsCache }); });
+      if ("open" in b) row.open = b.open === true || b.open === "true";
+      [["deliveryFee", "delivery_fee"], ["minOrder", "min_order"], ["freeAbove", "free_above"]].forEach(function (k) { if (k[0] in b) { var v = parseFloat(b[k[0]]); row[k[1]] = isNaN(v) || v < 0 ? 0 : money(v); } });
+      return rest("PATCH", "/rest/v1/settings?id=eq.1", row, "return=representation").then(function (r) { return r.ok ? loadSettings().then(function () { return ok({ settings: settingsCache }); }) : fail(r); });
     }
     if (url === "/api/admin/menu" && method === "POST") {
       var nr = { avail: true, type: "veg", cat: "Anya", descr: "" }, er = fields(b, nr); if (er || !nr.name || nr.price == null) return Promise.resolve(bad(400, er || "Naam aur rate daalein."));
