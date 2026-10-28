@@ -108,7 +108,7 @@
       }
       return sheet(h);
     }
-    if (modal === "admin") return sheet('<h2>Admin login <button class="x" data-act="closeModal" aria-label="Band karein">×</button></h2><div class="field"><label for="admPass">Password</label><input type="password" id="admPass" autocomplete="current-password"></div>' + (adm.err ? '<p class="err">' + esc(adm.err) + '</p>' : '') + '<button class="btn primary" data-act="admLogin"' + (busy ? " disabled" : "") + '>Login</button>');
+    if (modal === "admin") return sheet('<h2>Admin login <button class="x" data-act="closeModal" aria-label="Band karein">×</button></h2><div class="field"><label for="admEmail">Admin email</label><input type="email" id="admEmail" autocomplete="username" value="' + esc(adm.email || "") + '"></div><div class="field"><label for="admPass">Password</label><input type="password" id="admPass" autocomplete="current-password"></div>' + (adm.err ? '<p class="err">' + esc(adm.err) + '</p>' : '') + '<button class="btn primary" data-act="admLogin"' + (busy ? " disabled" : "") + '>Login</button>');
     return "";
   }
 
@@ -154,7 +154,7 @@
   function adminCustomers() {
     var list = AD.customers.slice().sort(function (a, b) { return (b.last || 0) - (a.last || 0); });
     var h = '<div class="bar-actions"><button class="btn sm" data-act="exp" data-v="customers">Customers CSV download</button></div>';
-    if (!list.length) return h + '<p class="empty">Abhi koi customer nahi hai. Pehle login ke baad yahan dikhega.</p>';
+    if (!list.length) return h + '<p class="empty">Abhi koi customer nahi hai. Pehla order aane par yahan dikhega.</p>';
     return h + '<div class="card scroll"><table><thead><tr><th>Naam</th><th>Mobile</th><th class="n">Orders</th><th class="n">Kul kharcha</th><th>Pehla login</th><th>Aakhri order</th></tr></thead><tbody>' +
       list.map(function (c) { return '<tr><td>' + esc(c.name || "-") + '</td><td>' + esc(c.phone) + '</td><td class="n">' + c.orders + '</td><td class="n">' + rs(c.spent) + '</td><td>' + fmtTime(c.first) + '</td><td>' + (c.orders ? fmtTime(c.last) : "-") + '</td></tr>'; }).join("") + '</tbody></table></div>';
   }
@@ -176,7 +176,7 @@
       '<div class="field"><label for="sHours">Timing</label><input type="text" id="sHours" maxlength="120" value="' + esc(s.hours) + '" data-chg="set" data-f="hours"></div>' +
       '<div class="field"><label for="sAddr">Pata</label><input type="text" id="sAddr" maxlength="200" value="' + esc(s.address) + '" data-chg="set" data-f="address"></div></div>' +
       '<div class="card"><h3>Password badlein</h3><div class="field"><label for="pOld">Purana password</label><input type="password" id="pOld" autocomplete="current-password"></div><div class="field"><label for="pNew">Naya password (kam se kam 8 akshar)</label><input type="password" id="pNew" autocomplete="new-password"></div><div class="field"><label for="pNew2">Naya password dobara</label><input type="password" id="pNew2" autocomplete="new-password"></div><button class="btn primary" data-act="chgPass">Password badlein</button></div>' +
-      '<div class="card"><h3>Backup</h3><p class="hint">Admin ka data (orders, customers, menu badlav) sirf is browser mein save hota hai. Kabhi kabhi backup download karke surakshit rakhein.</p><div class="bar-actions"><button class="btn sm" data-act="exp" data-v="backup">Backup download</button></div></div>';
+      '<div class="card"><h3>Backup</h3><p class="hint">Sara data Supabase mein surakshit hai. Phir bhi kabhi kabhi backup download karke rakhein. Kabhi kabhi backup download karke surakshit rakhein.</p><div class="bar-actions"><button class="btn sm" data-act="exp" data-v="backup">Backup download</button></div></div>';
   }
 
   /* ---------- render ---------- */
@@ -256,13 +256,13 @@
       });
     },
     openAdmin: function () {
-      if (adminOk) { loadAdmin().then(function (r) { if (r.ok) { view = "admin"; tab = "orders"; render(); window.scrollTo(0, 0); } else { adm.err = ""; modal = "admin"; focusId = "admPass"; render(); } }); return; }
-      adm.err = ""; modal = "admin"; focusId = "admPass"; render();
+      if (adminOk) { loadAdmin().then(function (r) { if (r.ok) { view = "admin"; tab = "orders"; render(); window.scrollTo(0, 0); } else { adm.err = ""; modal = "admin"; focusId = "admEmail"; render(); } }); return; }
+      adm.err = ""; modal = "admin"; focusId = "admEmail"; render();
     },
     admLogin: function () {
-      var pw = $("#admPass").value || ""; if (busy) return; setBusy(true);
-      api("POST", "/api/admin/login", { password: pw }).then(function (r) {
-        if (!r.ok) { busy = false; adm.err = r.data.error || "Login nahi hua."; focusId = "admPass"; return render(); }
+      var pw = $("#admPass").value || ""; adm.email = ($("#admEmail").value || "").trim(); if (busy) return; setBusy(true);
+      api("POST", "/api/admin/login", { email: adm.email, password: pw }).then(function (r) {
+        if (!r.ok) { busy = false; adm.err = r.data.error || "Login nahi hua."; focusId = "admEmail"; return render(); }
         adminOk = true; return loadAdmin().then(function () { busy = false; modal = null; view = "admin"; tab = "orders"; render(); window.scrollTo(0, 0); });
       });
     },
@@ -317,7 +317,7 @@
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape" && modal) A.closeModal();
     if (e.key === "Enter" && e.target.tagName === "INPUT") {
-      if (e.target.id === "phoneIn") A.sendOtp(); else if (e.target.id === "otpIn") A.verifyOtp(); else if (e.target.id === "admPass") A.admLogin();
+      if (e.target.id === "phoneIn") A.sendOtp(); else if (e.target.id === "otpIn") A.verifyOtp(); else if (e.target.id === "admPass" || e.target.id === "admEmail") A.admLogin();
     }
   });
   document.addEventListener("input", function (e) {
